@@ -38,109 +38,298 @@ function Login({ iniciarSesion }) {
     <Box
       sx={{
         minHeight: "100vh",
+        width: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        boxSizing: "border-box",
         background:
           "linear-gradient(135deg, #eaf8fc 0%, #f5fbfc 50%, #fff8ee 100%)",
         position: "relative",
         overflow: "hidden",
+
+        px: {
+          xs: 1.5,
+          sm: 2,
+          md: 3,
+        },
+
+        py: {
+          xs: 2,
+          sm: 3,
+          md: 4,
+        },
       }}
     >
-      {/* =========================
-          DECORACIONES
-      ========================== */}
+      {/* ==================================================
+          DECORACIONES DE FONDO
+      ================================================== */}
 
-      {/* Cápsula */}
+      {/* CÁPSULA IZQUIERDA */}
+
       <Box
         sx={{
           position: "absolute",
-          width: 180,
-          height: 65,
+
+          width: {
+            xs: 110,
+            sm: 150,
+            md: 180,
+          },
+
+          height: {
+            xs: 40,
+            sm: 50,
+            md: 65,
+          },
+
           borderRadius: "50px",
+
           background:
             "linear-gradient(90deg, rgba(66,185,212,0.10) 50%, rgba(255,190,110,0.10) 50%)",
+
           transform: "rotate(-25deg)",
-          top: 100,
-          left: -40,
+
+          top: {
+            xs: 40,
+            sm: 70,
+            md: 100,
+          },
+
+          left: {
+            xs: -45,
+            sm: -35,
+            md: -40,
+          },
         }}
       />
 
-      {/* Pastilla */}
+      {/* PASTILLA DERECHA */}
+
       <Box
         sx={{
           position: "absolute",
-          width: 80,
-          height: 80,
+
+          width: {
+            xs: 55,
+            sm: 70,
+            md: 80,
+          },
+
+          height: {
+            xs: 55,
+            sm: 70,
+            md: 80,
+          },
+
           borderRadius: "50%",
-          border: "12px solid rgba(66,185,212,0.07)",
-          right: 100,
-          top: 120,
+
+          border: {
+            xs: "8px solid rgba(66,185,212,0.07)",
+            sm: "10px solid rgba(66,185,212,0.07)",
+            md: "12px solid rgba(66,185,212,0.07)",
+          },
+
+          right: {
+            xs: 25,
+            sm: 60,
+            md: 100,
+          },
+
+          top: {
+            xs: 45,
+            sm: 80,
+            md: 120,
+          },
         }}
       />
 
-      {/* Otra cápsula */}
+      {/* CÁPSULA INFERIOR */}
+
       <Box
         sx={{
           position: "absolute",
-          width: 140,
-          height: 50,
+
+          width: {
+            xs: 100,
+            sm: 120,
+            md: 140,
+          },
+
+          height: {
+            xs: 36,
+            sm: 43,
+            md: 50,
+          },
+
           borderRadius: "50px",
+
           background:
             "linear-gradient(90deg, rgba(66,185,212,0.07) 50%, rgba(255,190,110,0.08) 50%)",
+
           transform: "rotate(25deg)",
-          bottom: 100,
-          right: -30,
+
+          bottom: {
+            xs: 40,
+            sm: 70,
+            md: 100,
+          },
+
+          right: {
+            xs: -35,
+            sm: -25,
+            md: -30,
+          },
         }}
       />
 
-      {/* =========================
+      {/* CÍRCULO DECORATIVO */}
+
+      <Box
+        sx={{
+          position: "absolute",
+
+          width: {
+            xs: 90,
+            sm: 140,
+            md: 200,
+          },
+
+          height: {
+            xs: 90,
+            sm: 140,
+            md: 200,
+          },
+
+          borderRadius: "50%",
+
+          border: {
+            xs: "2px solid rgba(255,190,110,0.08)",
+            md: "3px solid rgba(255,190,110,0.08)",
+          },
+
+          bottom: {
+            xs: -30,
+            sm: -50,
+            md: -70,
+          },
+
+          left: {
+            xs: -30,
+            sm: -40,
+            md: -60,
+          },
+        }}
+      />
+
+      {/* ==================================================
           LOGIN
-      ========================== */}
+      ================================================== */}
 
       <Card
         sx={{
           width: "100%",
-          maxWidth: 430,
-          borderRadius: "24px",
+
+          maxWidth: {
+            xs: 370,
+            sm: 430,
+          },
+
+          borderRadius: {
+            xs: "18px",
+            sm: "22px",
+            md: "24px",
+          },
+
           boxShadow:
             "0 20px 60px rgba(40,120,150,0.15)",
-          border: "1px solid rgba(66,185,212,0.12)",
+
+          border:
+            "1px solid rgba(66,185,212,0.12)",
+
           position: "relative",
           zIndex: 2,
+
           overflow: "hidden",
         }}
       >
-        {/* Línea superior */}
+        {/* LÍNEA SUPERIOR */}
+
         <Box
           sx={{
-            height: 6,
+            height: {
+              xs: 4,
+              sm: 5,
+              md: 6,
+            },
+
             background:
               "linear-gradient(90deg, #42b9d4, #7bd5df, #ffbe6e)",
           }}
         />
 
-        <CardContent sx={{ padding: 5 }}>
-          {/* Logo */}
+        <CardContent
+          sx={{
+            px: {
+              xs: 2.5,
+              sm: 4,
+              md: 5,
+            },
+
+            py: {
+              xs: 3,
+              sm: 4,
+              md: 5,
+            },
+          }}
+        >
+          {/* ==================================================
+              LOGO
+          ================================================== */}
 
           <Box
             sx={{
               display: "flex",
               justifyContent: "center",
-              marginBottom: 2,
+              mb: {
+                xs: 1.5,
+                sm: 2,
+              },
             }}
           >
             <Box
               sx={{
-                width: 70,
-                height: 70,
-                borderRadius: "20px",
+                width: {
+                  xs: 55,
+                  sm: 65,
+                  md: 70,
+                },
+
+                height: {
+                  xs: 55,
+                  sm: 65,
+                  md: 70,
+                },
+
+                borderRadius: {
+                  xs: "16px",
+                  sm: "18px",
+                  md: "20px",
+                },
+
                 background:
                   "linear-gradient(135deg, #42b9d4, #73cfdd)",
+
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 36,
+
+                fontSize: {
+                  xs: 28,
+                  sm: 32,
+                  md: 36,
+                },
+
                 boxShadow:
                   "0 10px 25px rgba(66,185,212,0.25)",
               }}
@@ -149,12 +338,22 @@ function Login({ iniciarSesion }) {
             </Box>
           </Box>
 
+          {/* ==================================================
+              TÍTULO
+          ================================================== */}
+
           <Typography
             variant="h4"
             fontWeight="800"
             textAlign="center"
             sx={{
               color: "#12344d",
+
+              fontSize: {
+                xs: "1.8rem",
+                sm: "2.1rem",
+                md: "2.125rem",
+              },
             }}
           >
             Farmacia
@@ -164,14 +363,28 @@ function Login({ iniciarSesion }) {
             textAlign="center"
             sx={{
               color: "#607d8b",
+
               marginTop: 0.5,
-              marginBottom: 4,
+
+              marginBottom: {
+                xs: 2.5,
+                sm: 3,
+                md: 4,
+              },
+
+              fontSize: {
+                xs: "0.85rem",
+                sm: "0.95rem",
+                md: "1rem",
+              },
             }}
           >
             Ingresá al sistema de gestión
           </Typography>
 
-          {/* Usuario */}
+          {/* ==================================================
+              USUARIO
+          ================================================== */}
 
           <TextField
             fullWidth
@@ -179,34 +392,85 @@ function Login({ iniciarSesion }) {
             placeholder="Ingresá tu usuario"
             value={usuario}
             onChange={(e) => setUsuario(e.target.value)}
-            sx={{ marginBottom: 2 }}
+            sx={{
+              marginBottom: 2,
+
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "12px",
+
+                "&:hover fieldset": {
+                  borderColor: "#42b9d4",
+                },
+
+                "&.Mui-focused fieldset": {
+                  borderColor: "#42b9d4",
+                },
+              },
+
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#42b9d4",
+              },
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <PersonIcon />
+                  <PersonIcon
+                    sx={{
+                      color: "#75b9c7",
+                    }}
+                  />
                 </InputAdornment>
               ),
             }}
           />
 
-          {/* Contraseña */}
+          {/* ==================================================
+              CONTRASEÑA
+          ================================================== */}
 
           <TextField
             fullWidth
             label="Contraseña"
             placeholder="Ingresá tu contraseña"
-            type={mostrarPassword ? "text" : "password"}
+            type={
+              mostrarPassword
+                ? "text"
+                : "password"
+            }
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleLogin();
               }
             }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "12px",
+
+                "&:hover fieldset": {
+                  borderColor: "#42b9d4",
+                },
+
+                "&.Mui-focused fieldset": {
+                  borderColor: "#42b9d4",
+                },
+              },
+
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#42b9d4",
+              },
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <LockIcon />
+                  <LockIcon
+                    sx={{
+                      color: "#75b9c7",
+                    }}
+                  />
                 </InputAdornment>
               ),
 
@@ -214,8 +478,11 @@ function Login({ iniciarSesion }) {
                 <InputAdornment position="end">
                   <IconButton
                     onClick={() =>
-                      setMostrarPassword(!mostrarPassword)
+                      setMostrarPassword(
+                        !mostrarPassword
+                      )
                     }
+                    edge="end"
                   >
                     {mostrarPassword ? (
                       <VisibilityOffIcon />
@@ -228,22 +495,32 @@ function Login({ iniciarSesion }) {
             }}
           />
 
-          {/* Error */}
+          {/* ==================================================
+              ERROR
+          ================================================== */}
 
           {error && (
             <Typography
               sx={{
                 color: "#d32f2f",
+
                 marginTop: 2,
+
                 textAlign: "center",
-                fontSize: 14,
+
+                fontSize: {
+                  xs: 12,
+                  sm: 14,
+                },
               }}
             >
               {error}
             </Typography>
           )}
 
-          {/* Botón */}
+          {/* ==================================================
+              BOTÓN
+          ================================================== */}
 
           <Button
             fullWidth
@@ -251,11 +528,25 @@ function Login({ iniciarSesion }) {
             onClick={handleLogin}
             sx={{
               marginTop: 3,
-              height: 48,
+
+              height: {
+                xs: 46,
+                sm: 48,
+                md: 50,
+              },
+
               borderRadius: "12px",
+
               textTransform: "none",
-              fontSize: 16,
+
+              fontSize: {
+                xs: 14,
+                sm: 15,
+                md: 16,
+              },
+
               fontWeight: "bold",
+
               background:
                 "linear-gradient(90deg, #42b9d4, #55c5d9)",
 
@@ -265,6 +556,7 @@ function Login({ iniciarSesion }) {
               "&:hover": {
                 background:
                   "linear-gradient(90deg, #35abc7, #48bacf)",
+
                 boxShadow:
                   "0 10px 25px rgba(66,185,212,0.35)",
               },
@@ -273,11 +565,21 @@ function Login({ iniciarSesion }) {
             Iniciar sesión
           </Button>
 
+          {/* ==================================================
+              PIE
+          ================================================== */}
+
           <Typography
             textAlign="center"
             sx={{
               marginTop: 3,
-              fontSize: 13,
+
+              fontSize: {
+                xs: 11,
+                sm: 12,
+                md: 13,
+              },
+
               color: "#90a4ae",
             }}
           >
