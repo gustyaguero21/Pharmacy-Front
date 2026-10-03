@@ -1,1018 +1,685 @@
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
+  Button,
   Card,
   CardContent,
-  Button,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  CircularProgress,
 } from "@mui/material";
 
+import MenuIcon from "@mui/icons-material/Menu";
+import MedicationIcon from "@mui/icons-material/Medication";
+import PeopleIcon from "@mui/icons-material/People";
+import CategoryIcon from "@mui/icons-material/Category";
+import CloseIcon from "@mui/icons-material/Close";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import VaccinesIcon from "@mui/icons-material/Vaccines";
+
+const API_CATEGORIES_URL = "http://localhost:5000/api/v1/categories";
+
 function Dashboard({ setPagina }) {
+  const [menuAbierto, setMenuAbierto] = useState(false);
+
+  // =========================
+  // CANTIDADES Y ESTADOS DE CARGA
+  // =========================
+  const [cantidadMedicamentos, setCantidadMedicamentos] = useState(6);
+  const [cantidadCategorias, setCantidadCategorias] = useState(0);
+  const [cargandoCategorias, setCargandoCategorias] = useState(true);
+  const [cantidadEmpleados, setCantidadEmpleados] = useState(3);
+
+  // =========================
+  // NAVEGACION
+  // =========================
+  const navegar = (pagina) => {
+    setPagina(pagina);
+    setMenuAbierto(false);
+  };
+
+  // =========================
+  // MENU
+  // =========================
+  const opcionesMenu = [
+    {
+      nombre: "Medicamentos",
+      icono: <MedicationIcon />,
+      pagina: "medicamentos",
+    },
+    {
+      nombre: "Categorías",
+      icono: <CategoryIcon />,
+      pagina: "categorias",
+    },
+    {
+      nombre: "Empleados",
+      icono: <PeopleIcon />,
+      pagina: "empleados",
+    },
+  ];
+
+  // =========================
+  // CARGA DE DATOS DESDE FLASK/API
+  // =========================
+  useEffect(() => {
+    const obtenerCategorias = async () => {
+      try {
+        const respuesta = await fetch(API_CATEGORIES_URL);
+
+        if (respuesta.ok) {
+          const data = await respuesta.json();
+
+          // Si el backend devuelve una lista de tuplas [[58, "ANALG01", ...]]
+          // o una lista de objetos, data.length contabiliza el total real.
+          if (Array.isArray(data)) {
+            setCantidadCategorias(data.length);
+          } else if (data && Array.isArray(data.categorias)) {
+            setCantidadCategorias(data.categorias.length);
+          } else {
+            setCantidadCategorias(0);
+          }
+        } else {
+          console.error("Error al obtener las categorías:", respuesta.status);
+        }
+      } catch (error) {
+        console.error("Error de conexión al obtener categorías:", error);
+      } finally {
+        setCargandoCategorias(false);
+      }
+    };
+
+    obtenerCategorias();
+  }, []);
+
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #f4f9fc 0%, #eef7fa 50%, #f8fbfd 100%)",
         position: "relative",
         overflow: "hidden",
+        background:
+          "linear-gradient(135deg, #f4f9fc 0%, #eef7fa 50%, #f8fbfd 100%)",
       }}
     >
-      {/* =====================================================
-          DECORACIONES DE FONDO
-      ====================================================== */}
-
-      {/* CÁPSULA 1 */}
+      {/* BARRA SUPERIOR */}
       <Box
         sx={{
-          position: "absolute",
-          width: 180,
-          height: 70,
-          borderRadius: "50px",
+          height: 8,
+          width: "100%",
           background:
-            "linear-gradient(90deg, rgba(25,118,210,0.08) 50%, rgba(0,188,212,0.08) 50%)",
-          transform: "rotate(-25deg)",
-          top: 130,
-          right: -45,
-          zIndex: 0,
-          border: "2px solid rgba(25,118,210,0.06)",
+            "linear-gradient(90deg, #7dd3fc, #a5d8ff, #f3c4a8)",
         }}
       />
 
-      {/* CÁPSULA 2 */}
+      {/* DECORACION DE FONDO */}
       <Box
         sx={{
           position: "absolute",
-          width: 150,
-          height: 58,
-          borderRadius: "50px",
-          background:
-            "linear-gradient(90deg, rgba(0,172,193,0.07) 50%, rgba(25,118,210,0.07) 50%)",
-          transform: "rotate(30deg)",
-          bottom: 100,
-          left: -40,
-          zIndex: 0,
-          border: "2px solid rgba(0,172,193,0.05)",
-        }}
-      />
-
-      {/* PASTILLA 1 */}
-      <Box
-        sx={{
-          position: "absolute",
-          width: 75,
-          height: 75,
+          width: 300,
+          height: 300,
           borderRadius: "50%",
-          backgroundColor: "rgba(25,118,210,0.055)",
-          top: 330,
-          right: 90,
-          zIndex: 0,
-          border: "2px solid rgba(25,118,210,0.05)",
+          background: "rgba(125,211,252,0.08)",
+          top: -120,
+          right: -100,
+          pointerEvents: "none",
         }}
       />
 
-      {/* PASTILLA 2 */}
       <Box
         sx={{
           position: "absolute",
-          width: 55,
-          height: 55,
+          width: 250,
+          height: 250,
           borderRadius: "50%",
-          backgroundColor: "rgba(0,188,212,0.06)",
-          bottom: 180,
-          right: 260,
-          zIndex: 0,
-          border: "2px solid rgba(0,188,212,0.05)",
+          background: "rgba(200,162,232,0.08)",
+          bottom: -100,
+          left: -80,
+          pointerEvents: "none",
         }}
       />
 
-      {/* =====================================================
-          JERINGA 1
-      ====================================================== */}
-
-      <Box
-        sx={{
-          position: "absolute",
-          width: 190,
-          height: 32,
-          top: 210,
-          left: -55,
-          transform: "rotate(-28deg)",
-          opacity: 0.12,
-          zIndex: 0,
-        }}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            left: 35,
-            top: 4,
-            width: 110,
-            height: 24,
-            border: "3px solid #1976d2",
-            borderRadius: "5px",
-            backgroundColor: "rgba(255,255,255,0.5)",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            left: 5,
-            top: 8,
-            width: 35,
-            height: 16,
-            border: "3px solid #1976d2",
-            borderRadius: "4px",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            right: -45,
-            top: 13,
-            width: 50,
-            height: 3,
-            backgroundColor: "#1976d2",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            right: -55,
-            top: 10,
-            width: 15,
-            height: 3,
-            backgroundColor: "#1976d2",
-            transform: "rotate(-8deg)",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            left: 55,
-            top: 10,
-            width: 2,
-            height: 12,
-            backgroundColor: "#1976d2",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            left: 75,
-            top: 10,
-            width: 2,
-            height: 12,
-            backgroundColor: "#1976d2",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            left: 95,
-            top: 10,
-            width: 2,
-            height: 12,
-            backgroundColor: "#1976d2",
-          }}
-        />
-      </Box>
-
-      {/* =====================================================
-          JERINGA 2
-      ====================================================== */}
-
-      <Box
-        sx={{
-          position: "absolute",
-          width: 170,
-          height: 30,
-          bottom: 40,
-          right: -40,
-          transform: "rotate(25deg)",
-          opacity: 0.09,
-          zIndex: 0,
-        }}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            left: 30,
-            top: 4,
-            width: 105,
-            height: 22,
-            border: "3px solid #00acc1",
-            borderRadius: "5px",
-            backgroundColor: "rgba(255,255,255,0.5)",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            left: 0,
-            top: 8,
-            width: 35,
-            height: 14,
-            border: "3px solid #00acc1",
-            borderRadius: "4px",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            right: -45,
-            top: 13,
-            width: 50,
-            height: 3,
-            backgroundColor: "#00acc1",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            left: 52,
-            top: 9,
-            width: 2,
-            height: 12,
-            backgroundColor: "#00acc1",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            left: 72,
-            top: 9,
-            width: 2,
-            height: 12,
-            backgroundColor: "#00acc1",
-          }}
-        />
-
-        <Box
-          sx={{
-            position: "absolute",
-            left: 92,
-            top: 9,
-            width: 2,
-            height: 12,
-            backgroundColor: "#00acc1",
-          }}
-        />
-      </Box>
-
-      {/* PEQUEÑAS PASTILLAS */}
-
-      <Box
-        sx={{
-          position: "absolute",
-          width: 32,
-          height: 15,
-          borderRadius: "20px",
-          backgroundColor: "rgba(25,118,210,0.08)",
-          transform: "rotate(35deg)",
-          top: 110,
-          left: "38%",
-          zIndex: 0,
-        }}
-      />
-
-      <Box
-        sx={{
-          position: "absolute",
-          width: 42,
-          height: 18,
-          borderRadius: "20px",
-          backgroundColor: "rgba(0,188,212,0.08)",
-          transform: "rotate(-20deg)",
-          bottom: 90,
-          left: "42%",
-          zIndex: 0,
-        }}
-      />
-
-      {/* =====================================================
-          CONTENIDO PRINCIPAL
-      ====================================================== */}
-
+      {/* ENCABEZADO */}
       <Box
         sx={{
           position: "relative",
-          zIndex: 1,
+          zIndex: 2,
           display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          px: { xs: 2, md: 5 },
+          py: 2,
         }}
       >
-        {/* =====================================================
-            MENÚ LATERAL
-        ====================================================== */}
-
-        <Box
-          sx={{
-            width: 245,
-            minHeight: "100vh",
-            background:
-              "linear-gradient(180deg, #c8a2e8 0%, #d8b9f0 100%)",
-            boxShadow: "4px 0 20px rgba(130,80,170,0.15)",
-            position: "fixed",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            display: "flex",
-            flexDirection: "column",
-            padding: 2,
-            zIndex: 10,
-            overflow: "hidden",
-          }}
-        >
-          {/* DETALLES DEL MENÚ */}
-
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box
             sx={{
-              position: "absolute",
-              width: 130,
-              height: 130,
-              borderRadius: "50%",
-              border: "2px solid rgba(255,255,255,0.16)",
-              right: -55,
-              top: 100,
-            }}
-          />
-
-          <Box
-            sx={{
-              position: "absolute",
-              width: 90,
-              height: 90,
-              borderRadius: "50%",
-              border: "2px solid rgba(255,190,110,0.20)",
-              left: -45,
-              bottom: 80,
-            }}
-          />
-
-          {/* LOGO */}
-
-          <Box
-            sx={{
+              width: 45,
+              height: 45,
+              borderRadius: "14px",
               display: "flex",
               alignItems: "center",
-              gap: 1.5,
-              padding: 1.5,
-              marginBottom: 3,
-              position: "relative",
-              zIndex: 2,
+              justifyContent: "center",
+              background: "linear-gradient(135deg, #a978d1, #c8a2e8)",
+              color: "#ffffff",
+              boxShadow: "0 6px 18px rgba(100,60,130,0.18)",
             }}
           >
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: "14px",
-                backgroundColor: "rgba(255,255,255,0.22)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 25,
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.25)",
-              }}
-            >
-              💊
-            </Box>
-
-            <Box>
-              <Typography
-                variant="h6"
-                fontWeight="bold"
-                sx={{
-                  lineHeight: 1,
-                  color: "#4a315e",
-                }}
-              >
-                Farmacia
-              </Typography>
-
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "#5f4770",
-                }}
-              >
-                Sistema de gestión
-              </Typography>
-            </Box>
+            <LocalHospitalIcon />
           </Box>
 
-          {/* SEPARADOR */}
-
-          <Box
-            sx={{
-              height: 1,
-              backgroundColor: "rgba(255,255,255,0.35)",
-              marginBottom: 2,
-            }}
-          />
-
-          {/* MENÚ */}
-
-          <Typography
-            sx={{
-              color: "#654878",
-              fontSize: "0.75rem",
-              fontWeight: "bold",
-              padding: "0 12px",
-              marginBottom: 1,
-              textTransform: "uppercase",
-            }}
-          >
-            Menú principal
-          </Typography>
-
-          <Button
-            sx={{
-              justifyContent: "flex-start",
-              color: "#4a315e",
-              borderRadius: "12px",
-              textTransform: "none",
-              fontWeight: "bold",
-              padding: "12px 15px",
-              marginBottom: 0.7,
-              backgroundColor: "rgba(255,255,255,0.28)",
-              position: "relative",
-              zIndex: 2,
-            }}
-          >
-            🏠
-            <Box component="span" sx={{ ml: 1.5 }}>
-              Dashboard
-            </Box>
-          </Button>
-
-          <Button
-            onClick={() => setPagina("medicamentos")}
-            sx={{
-              justifyContent: "flex-start",
-              color: "#4a315e",
-              borderRadius: "12px",
-              textTransform: "none",
-              padding: "12px 15px",
-              marginBottom: 0.7,
-              position: "relative",
-              zIndex: 2,
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.20)",
-              },
-            }}
-          >
-            💊
-            <Box component="span" sx={{ ml: 1.5 }}>
-              Medicamentos
-            </Box>
-          </Button>
-
-          <Button
-            onClick={() => setPagina("categorias")}
-            sx={{
-              justifyContent: "flex-start",
-              color: "#4a315e",
-              borderRadius: "12px",
-              textTransform: "none",
-              padding: "12px 15px",
-              marginBottom: 0.7,
-              position: "relative",
-              zIndex: 2,
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.20)",
-              },
-            }}
-          >
-            📂
-            <Box component="span" sx={{ ml: 1.5 }}>
-              Categorías
-            </Box>
-          </Button>
-
-          <Button
-            onClick={() => setPagina("empleados")}
-            sx={{
-              justifyContent: "flex-start",
-              color: "#4a315e",
-              borderRadius: "12px",
-              textTransform: "none",
-              padding: "12px 15px",
-              marginBottom: 0.7,
-              position: "relative",
-              zIndex: 2,
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.20)",
-              },
-            }}
-          >
-            👨‍💼
-            <Box component="span" sx={{ ml: 1.5 }}>
-              Empleados
-            </Box>
-          </Button>
-
-          {/* PARTE INFERIOR */}
-
-          <Box
-            sx={{
-              marginTop: "auto",
-              padding: 1.5,
-              position: "relative",
-              zIndex: 2,
-            }}
-          >
+          <Box>
             <Typography
               sx={{
-                color: "#654878",
-                fontSize: "0.75rem",
-                textAlign: "center",
+                fontWeight: "bold",
+                color: "#4a315e",
+                fontSize: { xs: "1rem", md: "1.2rem" },
               }}
             >
-              Sistema de Farmacia
+              Farmacia
+            </Typography>
+
+            <Typography sx={{ color: "#7b6689", fontSize: "0.8rem" }}>
+              Sistema de gestión
             </Typography>
           </Box>
         </Box>
 
-        {/* =====================================================
-            CONTENIDO
-        ====================================================== */}
+        {/* MENU DESKTOP */}
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
+          {opcionesMenu.map((opcion) => (
+            <Button
+              key={opcion.pagina}
+              onClick={() => navegar(opcion.pagina)}
+              startIcon={opcion.icono}
+              sx={{
+                color: "#5f4770",
+                textTransform: "none",
+                fontWeight: "bold",
+                borderRadius: "10px",
+                px: 2,
+                "&:hover": {
+                  backgroundColor: "rgba(200,162,232,0.12)",
+                  color: "#7b4f9d",
+                },
+              }}
+            >
+              {opcion.nombre}
+            </Button>
+          ))}
+        </Box>
 
+        {/* MENU MOBILE */}
+        <IconButton
+          onClick={() => setMenuAbierto(true)}
+          sx={{ display: { xs: "flex", md: "none" }, color: "#5f4770" }}
+        >
+          <MenuIcon />
+        </IconButton>
+      </Box>
+
+      {/* DRAWER MOBILE */}
+      <Drawer
+        anchor="right"
+        open={menuAbierto}
+        onClose={() => setMenuAbierto(false)}
+      >
         <Box
           sx={{
-            marginLeft: "245px",
-            width: "calc(100% - 245px)",
-            minHeight: "100vh",
+            width: 280,
+            height: "100%",
+            background: "linear-gradient(180deg, #f8fbfd, #eef7fa)",
           }}
         >
-          {/* BARRA SUPERIOR */}
-
           <Box
             sx={{
-              background:
-                "linear-gradient(90deg, #c8a2e8, #d8b9f0)",
-              boxShadow:
-                "0 4px 20px rgba(130,80,170,0.20)",
-              minHeight: 68,
-              padding: "14px 30px",
               display: "flex",
               alignItems: "center",
-              position: "relative",
-              overflow: "hidden",
+              justifyContent: "space-between",
+              p: 2,
             }}
           >
-            {/* LÍNEAS DECORATIVAS */}
-
-            <Box
-              sx={{
-                position: "absolute",
-                width: 220,
-                height: 2,
-                backgroundColor:
-                  "rgba(255,255,255,0.25)",
-                transform: "rotate(-18deg)",
-                right: 320,
-                top: 12,
-              }}
-            />
-
-            <Box
-              sx={{
-                position: "absolute",
-                width: 150,
-                height: 2,
-                backgroundColor:
-                  "rgba(255,194,120,0.65)",
-                transform: "rotate(-18deg)",
-                right: 170,
-                bottom: 13,
-              }}
-            />
-
-            <Box
-              sx={{
-                position: "absolute",
-                width: 100,
-                height: 2,
-                backgroundColor:
-                  "rgba(255,255,255,0.20)",
-                transform: "rotate(-18deg)",
-                right: 80,
-                top: 10,
-              }}
-            />
-
-            <Box
-              sx={{
-                position: "absolute",
-                width: 75,
-                height: 75,
-                borderRadius: "50%",
-                border:
-                  "2px solid rgba(255,190,110,0.35)",
-                right: -25,
-                top: -25,
-              }}
-            />
-
-            <Typography
-              sx={{
-                color: "#4a315e",
-                fontWeight: "bold",
-                position: "relative",
-                zIndex: 2,
-              }}
-            >
-              Panel de administración
+            <Typography fontWeight="bold" sx={{ color: "#4a315e" }}>
+              Menú
             </Typography>
+
+            <IconButton onClick={() => setMenuAbierto(false)}>
+              <CloseIcon />
+            </IconButton>
           </Box>
 
-          {/* CONTENIDO */}
+          <Divider />
 
+          <List>
+            {opcionesMenu.map((opcion) => (
+              <ListItem key={opcion.pagina} disablePadding>
+                <ListItemButton onClick={() => navegar(opcion.pagina)}>
+                  <ListItemIcon sx={{ color: "#9b68c7" }}>
+                    {opcion.icono}
+                  </ListItemIcon>
+
+                  <ListItemText
+                    primary={opcion.nombre}
+                    primaryTypographyProps={{
+                      fontWeight: "bold",
+                      color: "#5f4770",
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+
+      {/* CONTENIDO */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          maxWidth: 1200,
+          margin: "0 auto",
+          px: { xs: 2, md: 4 },
+          py: { xs: 4, md: 7 },
+        }}
+      >
+        {/* TITULO */}
+        <Box sx={{ textAlign: "center", mb: 6 }}>
           <Box
             sx={{
-              padding: {
-                xs: 3,
-                md: 5,
-              },
-              maxWidth: 1400,
-              margin: "0 auto",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 70,
+              height: 70,
+              borderRadius: "22px",
+              mb: 2,
+              background: "linear-gradient(135deg, #a978d1, #c8a2e8)",
+              color: "#ffffff",
+              boxShadow: "0 10px 25px rgba(100,60,130,0.18)",
             }}
           >
-            {/* ENCABEZADO */}
-
-            <Box sx={{ marginBottom: 4 }}>
-              <Typography
-                variant="h3"
-                fontWeight="800"
-                sx={{
-                  color: "#12344d",
-                  fontSize: {
-                    xs: "2rem",
-                    md: "2.7rem",
-                  },
-                }}
-              >
-                Dashboard
-              </Typography>
-
-              <Typography
-                sx={{
-                  color: "#607d8b",
-                  marginTop: 0.5,
-                  fontSize: "1rem",
-                }}
-              >
-                Administración y control de la farmacia
-              </Typography>
-            </Box>
-
-            {/* TARJETAS */}
-
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  md: "repeat(3, 1fr)",
-                },
-                gap: 3,
-              }}
-            >
-              {/* MEDICAMENTOS */}
-
-              <Card
-                sx={{
-                  borderRadius: "20px",
-                  border:
-                    "1px solid rgba(33,150,243,0.10)",
-                  boxShadow:
-                    "0 10px 35px rgba(33,150,243,0.10)",
-                  transition: "0.25s",
-                  overflow: "hidden",
-
-                  "&:hover": {
-                    transform: "translateY(-5px)",
-                    boxShadow:
-                      "0 16px 40px rgba(33,150,243,0.18)",
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    height: 5,
-                    background:
-                      "linear-gradient(90deg, #1976d2, #00acc1)",
-                  }}
-                />
-
-                <CardContent sx={{ padding: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        sx={{
-                          color: "#607d8b",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Medicamentos
-                      </Typography>
-
-                      <Typography
-                        variant="h2"
-                        fontWeight="800"
-                        sx={{
-                          color: "#12344d",
-                          marginTop: 1,
-                        }}
-                      >
-                        10
-                      </Typography>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: "18px",
-                        background:
-                          "linear-gradient(135deg, #e3f2fd, #e0f7fa)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 30,
-                      }}
-                    >
-                      💊
-                    </Box>
-                  </Box>
-
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    onClick={() =>
-                      setPagina("medicamentos")
-                    }
-                    sx={{
-                      marginTop: 3,
-                      borderRadius: "12px",
-                      textTransform: "none",
-                      fontWeight: "bold",
-                      background:
-                        "linear-gradient(90deg, #1976d2, #00acc1)",
-                      boxShadow: "none",
-
-                      "&:hover": {
-                        boxShadow:
-                          "0 6px 18px rgba(25,118,210,0.25)",
-                      },
-                    }}
-                  >
-                    Ver medicamentos
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* CATEGORÍAS */}
-
-              <Card
-                sx={{
-                  borderRadius: "20px",
-                  border:
-                    "1px solid rgba(0,188,212,0.10)",
-                  boxShadow:
-                    "0 10px 35px rgba(0,188,212,0.08)",
-                  transition: "0.25s",
-                  overflow: "hidden",
-
-                  "&:hover": {
-                    transform: "translateY(-5px)",
-                    boxShadow:
-                      "0 16px 40px rgba(0,188,212,0.15)",
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    height: 5,
-                    background:
-                      "linear-gradient(90deg, #00acc1, #26c6da)",
-                  }}
-                />
-
-                <CardContent sx={{ padding: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        sx={{
-                          color: "#607d8b",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Categorías
-                      </Typography>
-
-                      <Typography
-                        variant="h2"
-                        fontWeight="800"
-                        sx={{
-                          color: "#12344d",
-                          marginTop: 1,
-                        }}
-                      >
-                        5
-                      </Typography>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: "18px",
-                        background:
-                          "linear-gradient(135deg, #e0f7fa, #e8f5e9)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 30,
-                      }}
-                    >
-                      📂
-                    </Box>
-                  </Box>
-
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    onClick={() =>
-                      setPagina("categorias")
-                    }
-                    sx={{
-                      marginTop: 3,
-                      borderRadius: "12px",
-                      textTransform: "none",
-                      fontWeight: "bold",
-                      borderColor: "#00acc1",
-                      color: "#00838f",
-                    }}
-                  >
-                    Ver categorías
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* EMPLEADOS */}
-
-              <Card
-                sx={{
-                  borderRadius: "20px",
-                  border:
-                    "1px solid rgba(46,125,50,0.10)",
-                  boxShadow:
-                    "0 10px 35px rgba(46,125,50,0.08)",
-                  transition: "0.25s",
-                  overflow: "hidden",
-
-                  "&:hover": {
-                    transform: "translateY(-5px)",
-                    boxShadow:
-                      "0 16px 40px rgba(46,125,50,0.15)",
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    height: 5,
-                    background:
-                      "linear-gradient(90deg, #2e7d32, #66bb6a)",
-                  }}
-                />
-
-                <CardContent sx={{ padding: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        sx={{
-                          color: "#607d8b",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Empleados
-                      </Typography>
-
-                      <Typography
-                        variant="h2"
-                        fontWeight="800"
-                        sx={{
-                          color: "#12344d",
-                          marginTop: 1,
-                        }}
-                      >
-                        5
-                      </Typography>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: "18px",
-                        background:
-                          "linear-gradient(135deg, #e8f5e9, #f1f8e9)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 30,
-                      }}
-                    >
-                      👨‍💼
-                    </Box>
-                  </Box>
-
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    onClick={() =>
-                      setPagina("empleados")
-                    }
-                    sx={{
-                      marginTop: 3,
-                      borderRadius: "12px",
-                      textTransform: "none",
-                      fontWeight: "bold",
-                      borderColor: "#43a047",
-                      color: "#2e7d32",
-                    }}
-                  >
-                    Ver empleados
-                  </Button>
-                </CardContent>
-              </Card>
-            </Box>
-
-            {/* INFORMACIÓN */}
-
-            <Box
-              sx={{
-                marginTop: 4,
-                padding: 3,
-                borderRadius: "20px",
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240,249,252,0.9))",
-                border:
-                  "1px solid rgba(33,150,243,0.08)",
-                boxShadow:
-                  "0 8px 30px rgba(30,100,130,0.06)",
-              }}
-            >
-              <Typography
-                variant="h6"
-                fontWeight="bold"
-                sx={{ color: "#12344d" }}
-              >
-                Sistema de gestión farmacéutica
-              </Typography>
-
-              <Typography
-                sx={{
-                  color: "#607d8b",
-                  marginTop: 1,
-                }}
-              >
-                Desde este panel podés administrar
-                medicamentos, categorías y empleados de
-                la farmacia.
-              </Typography>
-            </Box>
+            <VaccinesIcon sx={{ fontSize: 38 }} />
           </Box>
+
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: "bold",
+              color: "#4a315e",
+              fontSize: { xs: "2rem", md: "3rem" },
+            }}
+          >
+            Dashboard
+          </Typography>
+
+          <Typography
+            sx={{
+              mt: 1,
+              color: "#6d5580",
+              fontSize: { xs: "0.95rem", md: "1.05rem" },
+            }}
+          >
+            Bienvenido al sistema de gestión de la farmacia.
+          </Typography>
+        </Box>
+
+        {/* TARJETAS PRINCIPALES */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "repeat(3, 1fr)",
+            },
+            gap: 3,
+          }}
+        >
+          {/* MEDICAMENTOS */}
+          <Card
+            onClick={() => navegar("medicamentos")}
+            sx={{
+              cursor: "pointer",
+              borderRadius: "22px",
+              background:
+                "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
+              boxShadow: "0 10px 30px rgba(130,80,170,0.14)",
+              border: "1px solid rgba(255,255,255,0.45)",
+              overflow: "hidden",
+              transition: "0.25s",
+              "&:hover": {
+                transform: "translateY(-6px)",
+                boxShadow: "0 15px 35px rgba(130,80,170,0.22)",
+              },
+            }}
+          >
+            <Box
+              sx={{
+                height: 6,
+                background:
+                  "linear-gradient(90deg, #a978d1, #e5c9f7)",
+              }}
+            />
+
+            <CardContent sx={{ p: 3.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 55,
+                    height: 55,
+                    borderRadius: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(255,255,255,0.35)",
+                    color: "#5f3d76",
+                  }}
+                >
+                  <MedicationIcon sx={{ fontSize: 32 }} />
+                </Box>
+
+                <Typography
+                  sx={{
+                    fontSize: "2.5rem",
+                    fontWeight: "bold",
+                    color: "#4a315e",
+                  }}
+                >
+                  {cantidadMedicamentos}
+                </Typography>
+              </Box>
+
+              <Typography
+                variant="h5"
+                sx={{ mt: 2, fontWeight: "bold", color: "#4a315e" }}
+              >
+                Medicamentos
+              </Typography>
+
+              <Typography sx={{ mt: 0.8, color: "#5f4770" }}>
+                {cantidadMedicamentos === 1
+                  ? "1 medicamento registrado"
+                  : `${cantidadMedicamentos} medicamentos registrados`}
+              </Typography>
+
+              <Typography
+                sx={{ mt: 1, color: "#6d5580", fontSize: "0.9rem" }}
+              >
+                Administrar medicamentos, stock y precios.
+              </Typography>
+            </CardContent>
+          </Card>
+
+          {/* CATEGORIAS (OBTENIDAS DINÁMICAMENTE) */}
+          <Card
+            onClick={() => navegar("categorias")}
+            sx={{
+              cursor: "pointer",
+              borderRadius: "22px",
+              background:
+                "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
+              boxShadow: "0 10px 30px rgba(130,80,170,0.14)",
+              border: "1px solid rgba(255,255,255,0.45)",
+              overflow: "hidden",
+              transition: "0.25s",
+              "&:hover": {
+                transform: "translateY(-6px)",
+                boxShadow: "0 15px 35px rgba(130,80,170,0.22)",
+              },
+            }}
+          >
+            <Box
+              sx={{
+                height: 6,
+                background:
+                  "linear-gradient(90deg, #a978d1, #e5c9f7)",
+              }}
+            />
+
+            <CardContent sx={{ p: 3.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 55,
+                    height: 55,
+                    borderRadius: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(255,255,255,0.35)",
+                    color: "#5f3d76",
+                  }}
+                >
+                  <CategoryIcon sx={{ fontSize: 32 }} />
+                </Box>
+
+                <Typography
+                  sx={{
+                    fontSize: "2.5rem",
+                    fontWeight: "bold",
+                    color: "#4a315e",
+                  }}
+                >
+                  {cargandoCategorias ? (
+                    <CircularProgress size={30} sx={{ color: "#4a315e" }} />
+                  ) : (
+                    cantidadCategorias
+                  )}
+                </Typography>
+              </Box>
+
+              <Typography
+                variant="h5"
+                sx={{ mt: 2, fontWeight: "bold", color: "#4a315e" }}
+              >
+                Categorías
+              </Typography>
+
+              <Typography sx={{ mt: 0.8, color: "#5f4770" }}>
+                {cargandoCategorias
+                  ? "Cargando..."
+                  : cantidadCategorias === 1
+                  ? "1 categoría registrada"
+                  : `${cantidadCategorias} categorías registradas`}
+              </Typography>
+
+              <Typography
+                sx={{ mt: 1, color: "#6d5580", fontSize: "0.9rem" }}
+              >
+                Organizar y administrar categorías.
+              </Typography>
+            </CardContent>
+          </Card>
+
+          {/* EMPLEADOS */}
+          <Card
+            onClick={() => navegar("empleados")}
+            sx={{
+              cursor: "pointer",
+              borderRadius: "22px",
+              background:
+                "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
+              boxShadow: "0 10px 30px rgba(130,80,170,0.14)",
+              border: "1px solid rgba(255,255,255,0.45)",
+              overflow: "hidden",
+              transition: "0.25s",
+              "&:hover": {
+                transform: "translateY(-6px)",
+                boxShadow: "0 15px 35px rgba(130,80,170,0.22)",
+              },
+            }}
+          >
+            <Box
+              sx={{
+                height: 6,
+                background:
+                  "linear-gradient(90deg, #a978d1, #e5c9f7)",
+              }}
+            />
+
+            <CardContent sx={{ p: 3.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 55,
+                    height: 55,
+                    borderRadius: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(255,255,255,0.35)",
+                    color: "#5f3d76",
+                  }}
+                >
+                  <PeopleIcon sx={{ fontSize: 32 }} />
+                </Box>
+
+                <Typography
+                  sx={{
+                    fontSize: "2.5rem",
+                    fontWeight: "bold",
+                    color: "#4a315e",
+                  }}
+                >
+                  {cantidadEmpleados}
+                </Typography>
+              </Box>
+
+              <Typography
+                variant="h5"
+                sx={{ mt: 2, fontWeight: "bold", color: "#4a315e" }}
+              >
+                Empleados
+              </Typography>
+
+              <Typography sx={{ mt: 0.8, color: "#5f4770" }}>
+                {cantidadEmpleados === 1
+                  ? "1 empleado registrado"
+                  : `${cantidadEmpleados} empleados registrados`}
+              </Typography>
+
+              <Typography
+                sx={{ mt: 1, color: "#6d5580", fontSize: "0.9rem" }}
+              >
+                Administrar empleados y usuarios.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
+
+        {/* ACCESOS RAPIDOS */}
+        <Card
+          sx={{
+            mt: 5,
+            borderRadius: "22px",
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid rgba(130,80,170,0.08)",
+            boxShadow: "0 8px 25px rgba(130,80,170,0.08)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                color: "#4a315e",
+                mb: 2,
+              }}
+            >
+              Accesos rápidos
+            </Typography>
+
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+              <Button
+                variant="outlined"
+                startIcon={<MedicationIcon />}
+                onClick={() => navegar("medicamentos")}
+                sx={{
+                  borderColor: "#c8a2e8",
+                  color: "#6d4d82",
+                  borderRadius: "10px",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    borderColor: "#a978d1",
+                    backgroundColor: "rgba(200,162,232,0.10)",
+                  },
+                }}
+              >
+                Medicamentos
+              </Button>
+
+              <Button
+                variant="outlined"
+                startIcon={<CategoryIcon />}
+                onClick={() => navegar("categorias")}
+                sx={{
+                  borderColor: "#c8a2e8",
+                  color: "#6d4d82",
+                  borderRadius: "10px",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    borderColor: "#a978d1",
+                    backgroundColor: "rgba(200,162,232,0.10)",
+                  },
+                }}
+              >
+                Categorías
+              </Button>
+
+              <Button
+                variant="outlined"
+                startIcon={<PeopleIcon />}
+                onClick={() => navegar("empleados")}
+                sx={{
+                  borderColor: "#c8a2e8",
+                  color: "#6d4d82",
+                  borderRadius: "10px",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    borderColor: "#a978d1",
+                    backgroundColor: "rgba(200,162,232,0.10)",
+                  },
+                }}
+              >
+                Empleados
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* PIE */}
+        <Box sx={{ textAlign: "center", mt: 5 }}>
+          <Typography sx={{ color: "#8b7897", fontSize: "0.85rem" }}>
+            Sistema de gestión de farmacia
+          </Typography>
         </Box>
       </Box>
     </Box>

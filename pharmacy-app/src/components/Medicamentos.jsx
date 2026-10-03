@@ -9,12 +9,20 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
 } from "@mui/material";
 
 import SearchIcon from "@mui/icons-material/Search";
 
 function Medicamentos({ setPagina }) {
+  // =========================
   // DATOS DE PRUEBA
+  // =========================
+
   const [medicamentos, setMedicamentos] = useState([
     {
       id: 1,
@@ -60,12 +68,46 @@ function Medicamentos({ setPagina }) {
     },
   ]);
 
+  // =========================
+  // BUSQUEDA Y FILTROS
+  // =========================
+
   const [busqueda, setBusqueda] = useState("");
 
   const [categoriaSeleccionada, setCategoriaSeleccionada] =
     useState("Todos");
 
+  // =========================
+  // MODAL
+  // =========================
+
+  const [modalAbierto, setModalAbierto] = useState(false);
+
+  const [modoEdicion, setModoEdicion] = useState(false);
+
+  const [medicamentoEditando, setMedicamentoEditando] =
+    useState(null);
+
+  // =========================
+  // FORMULARIO
+  // =========================
+
+  const [nombre, setNombre] = useState("");
+
+  const [precio, setPrecio] = useState("");
+
+  const [stock, setStock] = useState("");
+
+  const [categoria, setCategoria] =
+    useState("Analgésicos");
+
+  const [fechaExpiracion, setFechaExpiracion] =
+    useState("");
+
+  // =========================
   // FILTRAR MEDICAMENTOS
+  // =========================
+
   const medicamentosFiltrados = medicamentos.filter(
     (medicamento) => {
       const coincideNombre = medicamento.nombre
@@ -80,7 +122,122 @@ function Medicamentos({ setPagina }) {
     }
   );
 
-  // ELIMINAR MEDICAMENTO
+  // =========================
+  // ABRIR NUEVO MEDICAMENTO
+  // =========================
+
+  const abrirNuevoMedicamento = () => {
+    setModoEdicion(false);
+
+    setMedicamentoEditando(null);
+
+    setNombre("");
+    setPrecio("");
+    setStock("");
+    setCategoria("Analgésicos");
+
+    setModalAbierto(true);
+  };
+
+  // =========================
+  // ABRIR EDITAR
+  // =========================
+
+  const abrirEditarMedicamento = (medicamento) => {
+    setModoEdicion(true);
+
+    setMedicamentoEditando(medicamento);
+
+    setNombre(medicamento.nombre);
+    setPrecio(medicamento.precio);
+    setStock(medicamento.stock);
+    setCategoria(medicamento.categoria);
+
+    setModalAbierto(true);
+  };
+
+  // =========================
+  // GUARDAR MEDICAMENTO
+  // =========================
+
+  const guardarMedicamento = () => {
+    if (
+      !nombre.trim() ||
+      precio === "" ||
+      stock === "" ||
+      !categoria
+    ) {
+      window.alert("Completá todos los campos.");
+      return;
+    }
+
+    if (Number(precio) < 0) {
+      window.alert("El precio no puede ser negativo.");
+      return;
+    }
+
+    if (Number(stock) < 0) {
+      window.alert("El stock no puede ser negativo.");
+      return;
+    }
+
+    // EDITAR
+    if (modoEdicion && medicamentoEditando) {
+      setMedicamentos(
+        medicamentos.map((medicamento) =>
+          medicamento.id === medicamentoEditando.id
+            ? {
+                ...medicamento,
+                nombre: nombre.trim(),
+                precio: Number(precio),
+                stock: Number(stock),
+                categoria: categoria,
+              }
+            : medicamento
+        )
+      );
+    }
+
+    // NUEVO
+    else {
+      const nuevoMedicamento = {
+        id: Date.now(),
+        nombre: nombre.trim(),
+        precio: Number(precio),
+        stock: Number(stock),
+        categoria: categoria,
+      };
+
+      setMedicamentos([
+        ...medicamentos,
+        nuevoMedicamento,
+      ]);
+    }
+
+    cerrarModal();
+  };
+
+  // =========================
+  // CERRAR MODAL
+  // =========================
+
+  const cerrarModal = () => {
+    setModalAbierto(false);
+
+    setModoEdicion(false);
+
+    setMedicamentoEditando(null);
+
+    setNombre("");
+    setPrecio("");
+    setStock("");
+    setCategoria("Analgésicos");
+  };
+
+  // =========================
+  // ELIMINAR
+  // =========================
+
   const eliminarMedicamento = (id) => {
     const confirmar = window.confirm(
       "¿Seguro que querés eliminar este medicamento?"
@@ -106,7 +263,9 @@ function Medicamentos({ setPagina }) {
           "linear-gradient(135deg, #f4f9fc 0%, #eef7fa 50%, #f8fbfd 100%)",
       }}
     >
-      {/* ENCABEZADO */}
+      {/* =========================
+          ENCABEZADO
+      ========================== */}
 
       <Box
         sx={{
@@ -118,25 +277,28 @@ function Medicamentos({ setPagina }) {
           gap: 2,
         }}
       >
-<Button
-  onClick={() => setPagina("dashboard")}
-  sx={{
-    mb: 2,
-    color: "#5f3d76",
-    borderColor: "#c8a2e8",
-    borderRadius: "10px",
-    textTransform: "none",
-    fontWeight: "bold",
-    px: 2.5,
-    "&:hover": {
-      backgroundColor: "rgba(200,162,232,0.12)",
-      borderColor: "#a978d1",
-    },
-  }}
-  variant="outlined"
->
-  ← Volver al Dashboard
-</Button>
+        <Button
+          onClick={() => setPagina("dashboard")}
+          sx={{
+            mb: 2,
+            color: "#5f3d76",
+            borderColor: "#c8a2e8",
+            borderRadius: "10px",
+            textTransform: "none",
+            fontWeight: "bold",
+            px: 2.5,
+
+            "&:hover": {
+              backgroundColor:
+                "rgba(200,162,232,0.12)",
+              borderColor: "#a978d1",
+            },
+          }}
+          variant="outlined"
+        >
+          ← Volver al Dashboard
+        </Button>
+
         <Box>
           <Typography
             variant="h4"
@@ -160,6 +322,7 @@ function Medicamentos({ setPagina }) {
 
         <Button
           variant="contained"
+          onClick={abrirNuevoMedicamento}
           sx={{
             background:
               "linear-gradient(90deg, #a978d1, #c8a2e8)",
@@ -184,7 +347,9 @@ function Medicamentos({ setPagina }) {
         </Button>
       </Box>
 
-      {/* BUSCADOR */}
+      {/* =========================
+          BUSCADOR
+      ========================== */}
 
       <Card
         sx={{
@@ -204,7 +369,9 @@ function Medicamentos({ setPagina }) {
             label="Buscar medicamento"
             placeholder="Ej: Paracetamol"
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) =>
+              setBusqueda(e.target.value)
+            }
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -237,7 +404,9 @@ function Medicamentos({ setPagina }) {
         </CardContent>
       </Card>
 
-      {/* CATEGORÍAS */}
+      {/* =========================
+          CATEGORIAS
+      ========================== */}
 
       <Typography
         variant="h6"
@@ -258,165 +427,60 @@ function Medicamentos({ setPagina }) {
           marginBottom: 4,
         }}
       >
-        <Button
-          variant={
-            categoriaSeleccionada === "Todos"
-              ? "contained"
-              : "outlined"
-          }
-          onClick={() =>
-            setCategoriaSeleccionada("Todos")
-          }
-          sx={{
-            borderRadius: "10px",
-            textTransform: "none",
-            fontWeight: "bold",
+        {[
+          "Todos",
+          "Analgésicos",
+          "Antibióticos",
+          "Antiinflamatorios",
+          "Antialérgicos",
+        ].map((nombreCategoria) => (
+          <Button
+            key={nombreCategoria}
+            variant={
+              categoriaSeleccionada === nombreCategoria
+                ? "contained"
+                : "outlined"
+            }
+            onClick={() =>
+              setCategoriaSeleccionada(nombreCategoria)
+            }
+            sx={{
+              borderRadius: "10px",
+              textTransform: "none",
+              fontWeight: "bold",
 
-            ...(categoriaSeleccionada === "Todos"
-              ? {
-                  background:
-                    "linear-gradient(90deg, #a978d1, #c8a2e8)",
-                  color: "#3d2850",
-                  "&:hover": {
+              ...(categoriaSeleccionada ===
+              nombreCategoria
+                ? {
                     background:
-                      "linear-gradient(90deg, #9b68c7, #b98add)",
-                  },
-                }
-              : {
-                  borderColor: "#c8a2e8",
-                  color: "#6d4d82",
-                  "&:hover": {
-                    borderColor: "#a978d1",
-                    backgroundColor:
-                      "rgba(200,162,232,0.10)",
-                  },
-                }),
-          }}
-        >
-          Todos
-        </Button>
+                      "linear-gradient(90deg, #a978d1, #c8a2e8)",
+                    color: "#3d2850",
 
-        <Button
-          variant={
-            categoriaSeleccionada === "Analgésicos"
-              ? "contained"
-              : "outlined"
-          }
-          onClick={() =>
-            setCategoriaSeleccionada("Analgésicos")
-          }
-          sx={{
-            borderRadius: "10px",
-            textTransform: "none",
-            fontWeight: "bold",
+                    "&:hover": {
+                      background:
+                        "linear-gradient(90deg, #9b68c7, #b98add)",
+                    },
+                  }
+                : {
+                    borderColor: "#c8a2e8",
+                    color: "#6d4d82",
 
-            ...(categoriaSeleccionada === "Analgésicos"
-              ? {
-                  background:
-                    "linear-gradient(90deg, #a978d1, #c8a2e8)",
-                  color: "#3d2850",
-                }
-              : {
-                  borderColor: "#c8a2e8",
-                  color: "#6d4d82",
-                }),
-          }}
-        >
-          Analgésicos
-        </Button>
-
-        <Button
-          variant={
-            categoriaSeleccionada === "Antibióticos"
-              ? "contained"
-              : "outlined"
-          }
-          onClick={() =>
-            setCategoriaSeleccionada("Antibióticos")
-          }
-          sx={{
-            borderRadius: "10px",
-            textTransform: "none",
-            fontWeight: "bold",
-
-            ...(categoriaSeleccionada === "Antibióticos"
-              ? {
-                  background:
-                    "linear-gradient(90deg, #a978d1, #c8a2e8)",
-                  color: "#3d2850",
-                }
-              : {
-                  borderColor: "#c8a2e8",
-                  color: "#6d4d82",
-                }),
-          }}
-        >
-          Antibióticos
-        </Button>
-
-        <Button
-          variant={
-            categoriaSeleccionada === "Antiinflamatorios"
-              ? "contained"
-              : "outlined"
-          }
-          onClick={() =>
-            setCategoriaSeleccionada(
-              "Antiinflamatorios"
-            )
-          }
-          sx={{
-            borderRadius: "10px",
-            textTransform: "none",
-            fontWeight: "bold",
-
-            ...(categoriaSeleccionada ===
-            "Antiinflamatorios"
-              ? {
-                  background:
-                    "linear-gradient(90deg, #a978d1, #c8a2e8)",
-                  color: "#3d2850",
-                }
-              : {
-                  borderColor: "#c8a2e8",
-                  color: "#6d4d82",
-                }),
-          }}
-        >
-          Antiinflamatorios
-        </Button>
-
-        <Button
-          variant={
-            categoriaSeleccionada === "Antialérgicos"
-              ? "contained"
-              : "outlined"
-          }
-          onClick={() =>
-            setCategoriaSeleccionada("Antialérgicos")
-          }
-          sx={{
-            borderRadius: "10px",
-            textTransform: "none",
-            fontWeight: "bold",
-
-            ...(categoriaSeleccionada === "Antialérgicos"
-              ? {
-                  background:
-                    "linear-gradient(90deg, #a978d1, #c8a2e8)",
-                  color: "#3d2850",
-                }
-              : {
-                  borderColor: "#c8a2e8",
-                  color: "#6d4d82",
-                }),
-          }}
-        >
-          Antialérgicos
-        </Button>
+                    "&:hover": {
+                      borderColor: "#a978d1",
+                      backgroundColor:
+                        "rgba(200,162,232,0.10)",
+                    },
+                  }),
+            }}
+          >
+            {nombreCategoria}
+          </Button>
+        ))}
       </Box>
 
-      {/* RESULTADOS */}
+      {/* =========================
+          RESULTADOS
+      ========================== */}
 
       <Typography
         variant="h6"
@@ -430,7 +494,9 @@ function Medicamentos({ setPagina }) {
         {medicamentosFiltrados.length}
       </Typography>
 
-      {/* TARJETAS */}
+      {/* =========================
+          TARJETAS
+      ========================== */}
 
       <Box
         sx={{
@@ -443,137 +509,150 @@ function Medicamentos({ setPagina }) {
           gap: 3,
         }}
       >
-        {medicamentosFiltrados.map((medicamento) => (
-          <Card
-            key={medicamento.id}
-            sx={{
-              borderRadius: "20px",
-              background:
-                "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
-              boxShadow:
-                "0 8px 25px rgba(130, 80, 170, 0.15)",
-              border:
-                "1px solid rgba(255,255,255,0.35)",
-              overflow: "hidden",
-              transition: "0.25s",
-
-              "&:hover": {
-                transform: "translateY(-4px)",
-                boxShadow:
-                  "0 12px 30px rgba(130,80,170,0.22)",
-              },
-            }}
-          >
-            {/* DETALLE SUPERIOR */}
-
-            <Box
+        {medicamentosFiltrados.map(
+          (medicamento) => (
+            <Card
+              key={medicamento.id}
               sx={{
-                height: 5,
+                borderRadius: "20px",
                 background:
-                  "linear-gradient(90deg, #b98add, #e5c9f7)",
+                  "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
+                boxShadow:
+                  "0 8px 25px rgba(130, 80, 170, 0.15)",
+                border:
+                  "1px solid rgba(255,255,255,0.35)",
+                overflow: "hidden",
+                transition: "0.25s",
+
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow:
+                    "0 12px 30px rgba(130,80,170,0.22)",
+                },
               }}
-            />
-
-            <CardContent sx={{ p: 3 }}>
-              <Typography
-                variant="h6"
-                fontWeight="bold"
-                sx={{
-                  color: "#4a315e",
-                }}
-              >
-                {medicamento.nombre}
-              </Typography>
-
-              <Chip
-                label={medicamento.categoria}
-                sx={{
-                  marginTop: 1,
-                  marginBottom: 2,
-                  backgroundColor:
-                    "rgba(255,255,255,0.38)",
-                  color: "#5a3b70",
-                  fontWeight: "bold",
-                  border:
-                    "1px solid rgba(255,255,255,0.35)",
-                }}
-              />
-
-              <Typography
-                sx={{
-                  color: "#5f4770",
-                  fontWeight: 500,
-                }}
-              >
-                Precio: ${medicamento.precio}
-              </Typography>
-
-              <Typography
-                sx={{
-                  color: "#5f4770",
-                  fontWeight: 500,
-                  marginTop: 0.5,
-                }}
-              >
-                Stock: {medicamento.stock}
-              </Typography>
+            >
+              {/* DETALLE SUPERIOR */}
 
               <Box
                 sx={{
-                  display: "flex",
-                  gap: 1,
-                  marginTop: 2,
+                  height: 5,
+                  background:
+                    "linear-gradient(90deg, #b98add, #e5c9f7)",
                 }}
-              >
-                <Button
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    borderColor: "#a978d1",
-                    color: "#5f3d76",
-                    borderRadius: "10px",
-                    textTransform: "none",
-                    fontWeight: "bold",
+              />
 
-                    "&:hover": {
-                      borderColor: "#8f5db5",
-                      backgroundColor:
-                        "rgba(255,255,255,0.15)",
-                    },
+              <CardContent sx={{ p: 3 }}>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{
+                    color: "#4a315e",
                   }}
                 >
-                  Editar
-                </Button>
+                  {medicamento.nombre}
+                </Typography>
 
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() =>
-                    eliminarMedicamento(medicamento.id)
-                  }
+                <Chip
+                  label={medicamento.categoria}
                   sx={{
-                    borderColor: "#a45b79",
-                    color: "#7b4058",
-                    borderRadius: "10px",
-                    textTransform: "none",
+                    marginTop: 1,
+                    marginBottom: 2,
+                    backgroundColor:
+                      "rgba(255,255,255,0.38)",
+                    color: "#5a3b70",
                     fontWeight: "bold",
+                    border:
+                      "1px solid rgba(255,255,255,0.35)",
+                  }}
+                />
 
-                    "&:hover": {
-                      borderColor: "#8e4564",
-                      backgroundColor:
-                        "rgba(255,255,255,0.15)",
-                    },
+                <Typography
+                  sx={{
+                    color: "#5f4770",
+                    fontWeight: 500,
                   }}
                 >
-                  Eliminar
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
+                  Precio: ${medicamento.precio}
+                </Typography>
+
+                <Typography
+                  sx={{
+                    color: "#5f4770",
+                    fontWeight: 500,
+                    marginTop: 0.5,
+                  }}
+                >
+                  Stock: {medicamento.stock}
+                </Typography>
+
+                {/* BOTONES */}
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    marginTop: 2,
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() =>
+                      abrirEditarMedicamento(
+                        medicamento
+                      )
+                    }
+                    sx={{
+                      borderColor: "#a978d1",
+                      color: "#5f3d76",
+                      borderRadius: "10px",
+                      textTransform: "none",
+                      fontWeight: "bold",
+
+                      "&:hover": {
+                        borderColor: "#8f5db5",
+                        backgroundColor:
+                          "rgba(255,255,255,0.15)",
+                      },
+                    }}
+                  >
+                    Editar
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() =>
+                      eliminarMedicamento(
+                        medicamento.id
+                      )
+                    }
+                    sx={{
+                      borderColor: "#a45b79",
+                      color: "#7b4058",
+                      borderRadius: "10px",
+                      textTransform: "none",
+                      fontWeight: "bold",
+
+                      "&:hover": {
+                        borderColor: "#8e4564",
+                        backgroundColor:
+                          "rgba(255,255,255,0.15)",
+                      },
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          )
+        )}
       </Box>
 
-      {/* SIN RESULTADOS */}
+      {/* =========================
+          SIN RESULTADOS
+      ========================== */}
 
       {medicamentosFiltrados.length === 0 && (
         <Card
@@ -599,6 +678,145 @@ function Medicamentos({ setPagina }) {
           </CardContent>
         </Card>
       )}
+
+      {/* =========================
+          MODAL AGREGAR / EDITAR
+      ========================== */}
+
+      <Dialog
+        open={modalAbierto}
+        onClose={cerrarModal}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: "bold",
+            color: "#4a315e",
+          }}
+        >
+          {modoEdicion
+            ? "Editar medicamento"
+            : "Nuevo medicamento"}
+        </DialogTitle>
+
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Nombre"
+            placeholder="Ej: Paracetamol"
+            value={nombre}
+            onChange={(e) =>
+              setNombre(e.target.value)
+            }
+            margin="normal"
+          />
+
+          <TextField
+            fullWidth
+            label="Precio"
+            type="number"
+            value={precio}
+            onChange={(e) =>
+              setPrecio(e.target.value)
+            }
+            margin="normal"
+            inputProps={{
+              min: 0,
+            }}
+          />
+
+          <TextField
+            fullWidth
+            label="Stock"
+            type="number"
+            value={stock}
+            onChange={(e) =>
+              setStock(e.target.value)
+            }
+            margin="normal"
+            inputProps={{
+              min: 0,
+            }}
+          />
+
+          <TextField
+            fullWidth
+            select
+            label="Categoría"
+            value={categoria}
+            onChange={(e) =>
+              setCategoria(e.target.value)
+            }
+            margin="normal"
+          >
+            <MenuItem value="Analgésicos">
+              Analgésicos
+            </MenuItem>
+
+            <MenuItem value="Antibióticos">
+              Antibióticos
+            </MenuItem>
+
+            <MenuItem value="Antiinflamatorios">
+              Antiinflamatorios
+            </MenuItem>
+
+            <MenuItem value="Antialérgicos">
+              Antialérgicos
+            </MenuItem>
+          </TextField>
+
+          <TextField
+            fullWidth
+            label="Fecha de Expiración"
+            type="date"
+            value={fechaExpiracion}
+            onChange={(e) => setFechaExpiracion(e.target.value)}
+            margin="normal"
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+          />
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={cerrarModal}
+            sx={{
+              color: "#6d5580",
+              textTransform: "none",
+              fontWeight: "bold",
+            }}
+          >
+            Cancelar
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={guardarMedicamento}
+            sx={{
+              background:
+                "linear-gradient(90deg, #a978d1, #c8a2e8)",
+              color: "#3d2850",
+              fontWeight: "bold",
+              borderRadius: "10px",
+              textTransform: "none",
+
+              "&:hover": {
+                background:
+                  "linear-gradient(90deg, #9b68c7, #b98add)",
+              },
+            }}
+          >
+            {modoEdicion
+              ? "Guardar cambios"
+              : "Agregar medicamento"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

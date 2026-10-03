@@ -3,6 +3,8 @@ import { useState } from "react";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 import Medicamentos from "./components/Medicamentos";
+import Categorias from "./components/Categorias";
+import Empleados from "./components/Empleados";
 
 function App() {
   const [logueado, setLogueado] = useState(false);
@@ -24,6 +26,14 @@ function App() {
 
       {pagina === "medicamentos" && (
         <Medicamentos setPagina={setPagina} />
+      )}
+
+      {pagina === "categorias" && (
+        <Categorias setPagina={setPagina} />
+      )}
+
+      {pagina === "empleados" && (
+        <Empleados setPagina={setPagina} />
       )}
     </>
   );
