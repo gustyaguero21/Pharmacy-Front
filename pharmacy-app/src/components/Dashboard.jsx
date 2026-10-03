@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -13,6 +13,7 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  CircularProgress,
 } from "@mui/material";
 
 import MenuIcon from "@mui/icons-material/Menu";
@@ -23,28 +24,22 @@ import CloseIcon from "@mui/icons-material/Close";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
 
-import { useEffect } from "react";
+const API_CATEGORIES_URL = "http://localhost:5000/api/v1/categories";
 
 function Dashboard({ setPagina }) {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   // =========================
-  // CANTIDADES
+  // CANTIDADES Y ESTADOS DE CARGA
   // =========================
-
-  const [cantidadMedicamentos, setCantidadMedicamentos] =
-    useState(6);
-
-  const [cantidadCategorias, setCantidadCategorias] =
-    useState(4);
-
-  const [cantidadEmpleados, setCantidadEmpleados] =
-    useState(3);
+  const [cantidadMedicamentos, setCantidadMedicamentos] = useState(6);
+  const [cantidadCategorias, setCantidadCategorias] = useState(0);
+  const [cargandoCategorias, setCargandoCategorias] = useState(true);
+  const [cantidadEmpleados, setCantidadEmpleados] = useState(3);
 
   // =========================
   // NAVEGACION
   // =========================
-
   const navegar = (pagina) => {
     setPagina(pagina);
     setMenuAbierto(false);
@@ -53,7 +48,6 @@ function Dashboard({ setPagina }) {
   // =========================
   // MENU
   // =========================
-
   const opcionesMenu = [
     {
       nombre: "Medicamentos",
@@ -73,22 +67,36 @@ function Dashboard({ setPagina }) {
   ];
 
   // =========================
-  // CANTIDADES DE PRUEBA
+  // CARGA DE DATOS DESDE FLASK/API
   // =========================
-
   useEffect(() => {
-    /*
-      Por ahora usamos las cantidades
-      de los datos de prueba:
+    const obtenerCategorias = async () => {
+      try {
+        const respuesta = await fetch(API_CATEGORIES_URL);
 
-      Medicamentos = 6
-      Categorías = 4
-      Empleados = 3
+        if (respuesta.ok) {
+          const data = await respuesta.json();
 
-      Cuando conectemos Flask + MySQL,
-      estas cantidades van a salir
-      directamente de la base de datos.
-    */
+          // Si el backend devuelve una lista de tuplas [[58, "ANALG01", ...]]
+          // o una lista de objetos, data.length contabiliza el total real.
+          if (Array.isArray(data)) {
+            setCantidadCategorias(data.length);
+          } else if (data && Array.isArray(data.categorias)) {
+            setCantidadCategorias(data.categorias.length);
+          } else {
+            setCantidadCategorias(0);
+          }
+        } else {
+          console.error("Error al obtener las categorías:", respuesta.status);
+        }
+      } catch (error) {
+        console.error("Error de conexión al obtener categorías:", error);
+      } finally {
+        setCargandoCategorias(false);
+      }
+    };
+
+    obtenerCategorias();
   }, []);
 
   return (
@@ -101,10 +109,7 @@ function Dashboard({ setPagina }) {
           "linear-gradient(135deg, #f4f9fc 0%, #eef7fa 50%, #f8fbfd 100%)",
       }}
     >
-      {/* =========================
-          BARRA SUPERIOR
-      ========================== */}
-
+      {/* BARRA SUPERIOR */}
       <Box
         sx={{
           height: 8,
@@ -114,18 +119,14 @@ function Dashboard({ setPagina }) {
         }}
       />
 
-      {/* =========================
-          DECORACION DE FONDO
-      ========================== */}
-
+      {/* DECORACION DE FONDO */}
       <Box
         sx={{
           position: "absolute",
           width: 300,
           height: 300,
           borderRadius: "50%",
-          background:
-            "rgba(125,211,252,0.08)",
+          background: "rgba(125,211,252,0.08)",
           top: -120,
           right: -100,
           pointerEvents: "none",
@@ -138,18 +139,14 @@ function Dashboard({ setPagina }) {
           width: 250,
           height: 250,
           borderRadius: "50%",
-          background:
-            "rgba(200,162,232,0.08)",
+          background: "rgba(200,162,232,0.08)",
           bottom: -100,
           left: -80,
           pointerEvents: "none",
         }}
       />
 
-      {/* =========================
-          ENCABEZADO
-      ========================== */}
-
+      {/* ENCABEZADO */}
       <Box
         sx={{
           position: "relative",
@@ -161,13 +158,7 @@ function Dashboard({ setPagina }) {
           py: 2,
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-          }}
-        >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box
             sx={{
               width: 45,
@@ -176,11 +167,9 @@ function Dashboard({ setPagina }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background:
-                "linear-gradient(135deg, #a978d1, #c8a2e8)",
+              background: "linear-gradient(135deg, #a978d1, #c8a2e8)",
               color: "#ffffff",
-              boxShadow:
-                "0 6px 18px rgba(100,60,130,0.18)",
+              boxShadow: "0 6px 18px rgba(100,60,130,0.18)",
             }}
           >
             <LocalHospitalIcon />
@@ -197,25 +186,14 @@ function Dashboard({ setPagina }) {
               Farmacia
             </Typography>
 
-            <Typography
-              sx={{
-                color: "#7b6689",
-                fontSize: "0.8rem",
-              }}
-            >
+            <Typography sx={{ color: "#7b6689", fontSize: "0.8rem" }}>
               Sistema de gestión
             </Typography>
           </Box>
         </Box>
 
         {/* MENU DESKTOP */}
-
-        <Box
-          sx={{
-            display: { xs: "none", md: "flex" },
-            gap: 1,
-          }}
-        >
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
           {opcionesMenu.map((opcion) => (
             <Button
               key={opcion.pagina}
@@ -227,10 +205,8 @@ function Dashboard({ setPagina }) {
                 fontWeight: "bold",
                 borderRadius: "10px",
                 px: 2,
-
                 "&:hover": {
-                  backgroundColor:
-                    "rgba(200,162,232,0.12)",
+                  backgroundColor: "rgba(200,162,232,0.12)",
                   color: "#7b4f9d",
                 },
               }}
@@ -241,22 +217,15 @@ function Dashboard({ setPagina }) {
         </Box>
 
         {/* MENU MOBILE */}
-
         <IconButton
           onClick={() => setMenuAbierto(true)}
-          sx={{
-            display: { xs: "flex", md: "none" },
-            color: "#5f4770",
-          }}
+          sx={{ display: { xs: "flex", md: "none" }, color: "#5f4770" }}
         >
           <MenuIcon />
         </IconButton>
       </Box>
 
-      {/* =========================
-          DRAWER MOBILE
-      ========================== */}
-
+      {/* DRAWER MOBILE */}
       <Drawer
         anchor="right"
         open={menuAbierto}
@@ -266,8 +235,7 @@ function Dashboard({ setPagina }) {
           sx={{
             width: 280,
             height: "100%",
-            background:
-              "linear-gradient(180deg, #f8fbfd, #eef7fa)",
+            background: "linear-gradient(180deg, #f8fbfd, #eef7fa)",
           }}
         >
           <Box
@@ -278,18 +246,11 @@ function Dashboard({ setPagina }) {
               p: 2,
             }}
           >
-            <Typography
-              fontWeight="bold"
-              sx={{
-                color: "#4a315e",
-              }}
-            >
+            <Typography fontWeight="bold" sx={{ color: "#4a315e" }}>
               Menú
             </Typography>
 
-            <IconButton
-              onClick={() => setMenuAbierto(false)}
-            >
+            <IconButton onClick={() => setMenuAbierto(false)}>
               <CloseIcon />
             </IconButton>
           </Box>
@@ -298,20 +259,9 @@ function Dashboard({ setPagina }) {
 
           <List>
             {opcionesMenu.map((opcion) => (
-              <ListItem
-                key={opcion.pagina}
-                disablePadding
-              >
-                <ListItemButton
-                  onClick={() =>
-                    navegar(opcion.pagina)
-                  }
-                >
-                  <ListItemIcon
-                    sx={{
-                      color: "#9b68c7",
-                    }}
-                  >
+              <ListItem key={opcion.pagina} disablePadding>
+                <ListItemButton onClick={() => navegar(opcion.pagina)}>
+                  <ListItemIcon sx={{ color: "#9b68c7" }}>
                     {opcion.icono}
                   </ListItemIcon>
 
@@ -329,10 +279,7 @@ function Dashboard({ setPagina }) {
         </Box>
       </Drawer>
 
-      {/* =========================
-          CONTENIDO
-      ========================== */}
-
+      {/* CONTENIDO */}
       <Box
         sx={{
           position: "relative",
@@ -344,13 +291,7 @@ function Dashboard({ setPagina }) {
         }}
       >
         {/* TITULO */}
-
-        <Box
-          sx={{
-            textAlign: "center",
-            mb: 6,
-          }}
-        >
+        <Box sx={{ textAlign: "center", mb: 6 }}>
           <Box
             sx={{
               display: "inline-flex",
@@ -360,18 +301,12 @@ function Dashboard({ setPagina }) {
               height: 70,
               borderRadius: "22px",
               mb: 2,
-              background:
-                "linear-gradient(135deg, #a978d1, #c8a2e8)",
+              background: "linear-gradient(135deg, #a978d1, #c8a2e8)",
               color: "#ffffff",
-              boxShadow:
-                "0 10px 25px rgba(100,60,130,0.18)",
+              boxShadow: "0 10px 25px rgba(100,60,130,0.18)",
             }}
           >
-            <VaccinesIcon
-              sx={{
-                fontSize: 38,
-              }}
-            />
+            <VaccinesIcon sx={{ fontSize: 38 }} />
           </Box>
 
           <Typography
@@ -379,10 +314,7 @@ function Dashboard({ setPagina }) {
             sx={{
               fontWeight: "bold",
               color: "#4a315e",
-              fontSize: {
-                xs: "2rem",
-                md: "3rem",
-              },
+              fontSize: { xs: "2rem", md: "3rem" },
             }}
           >
             Dashboard
@@ -392,20 +324,14 @@ function Dashboard({ setPagina }) {
             sx={{
               mt: 1,
               color: "#6d5580",
-              fontSize: {
-                xs: "0.95rem",
-                md: "1.05rem",
-              },
+              fontSize: { xs: "0.95rem", md: "1.05rem" },
             }}
           >
             Bienvenido al sistema de gestión de la farmacia.
           </Typography>
         </Box>
 
-        {/* =========================
-            TARJETAS PRINCIPALES
-        ========================== */}
-
+        {/* TARJETAS PRINCIPALES */}
         <Box
           sx={{
             display: "grid",
@@ -417,7 +343,6 @@ function Dashboard({ setPagina }) {
           }}
         >
           {/* MEDICAMENTOS */}
-
           <Card
             onClick={() => navegar("medicamentos")}
             sx={{
@@ -425,17 +350,13 @@ function Dashboard({ setPagina }) {
               borderRadius: "22px",
               background:
                 "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
-              boxShadow:
-                "0 10px 30px rgba(130,80,170,0.14)",
-              border:
-                "1px solid rgba(255,255,255,0.45)",
+              boxShadow: "0 10px 30px rgba(130,80,170,0.14)",
+              border: "1px solid rgba(255,255,255,0.45)",
               overflow: "hidden",
               transition: "0.25s",
-
               "&:hover": {
                 transform: "translateY(-6px)",
-                boxShadow:
-                  "0 15px 35px rgba(130,80,170,0.22)",
+                boxShadow: "0 15px 35px rgba(130,80,170,0.22)",
               },
             }}
           >
@@ -447,11 +368,7 @@ function Dashboard({ setPagina }) {
               }}
             />
 
-            <CardContent
-              sx={{
-                p: 3.5,
-              }}
-            >
+            <CardContent sx={{ p: 3.5 }}>
               <Box
                 sx={{
                   display: "flex",
@@ -467,16 +384,11 @@ function Dashboard({ setPagina }) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background:
-                      "rgba(255,255,255,0.35)",
+                    background: "rgba(255,255,255,0.35)",
                     color: "#5f3d76",
                   }}
                 >
-                  <MedicationIcon
-                    sx={{
-                      fontSize: 32,
-                    }}
-                  />
+                  <MedicationIcon sx={{ fontSize: 32 }} />
                 </Box>
 
                 <Typography
@@ -492,40 +404,26 @@ function Dashboard({ setPagina }) {
 
               <Typography
                 variant="h5"
-                sx={{
-                  mt: 2,
-                  fontWeight: "bold",
-                  color: "#4a315e",
-                }}
+                sx={{ mt: 2, fontWeight: "bold", color: "#4a315e" }}
               >
                 Medicamentos
               </Typography>
 
-              <Typography
-                sx={{
-                  mt: 0.8,
-                  color: "#5f4770",
-                }}
-              >
+              <Typography sx={{ mt: 0.8, color: "#5f4770" }}>
                 {cantidadMedicamentos === 1
                   ? "1 medicamento registrado"
                   : `${cantidadMedicamentos} medicamentos registrados`}
               </Typography>
 
               <Typography
-                sx={{
-                  mt: 1,
-                  color: "#6d5580",
-                  fontSize: "0.9rem",
-                }}
+                sx={{ mt: 1, color: "#6d5580", fontSize: "0.9rem" }}
               >
                 Administrar medicamentos, stock y precios.
               </Typography>
             </CardContent>
           </Card>
 
-          {/* CATEGORIAS */}
-
+          {/* CATEGORIAS (OBTENIDAS DINÁMICAMENTE) */}
           <Card
             onClick={() => navegar("categorias")}
             sx={{
@@ -533,17 +431,13 @@ function Dashboard({ setPagina }) {
               borderRadius: "22px",
               background:
                 "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
-              boxShadow:
-                "0 10px 30px rgba(130,80,170,0.14)",
-              border:
-                "1px solid rgba(255,255,255,0.45)",
+              boxShadow: "0 10px 30px rgba(130,80,170,0.14)",
+              border: "1px solid rgba(255,255,255,0.45)",
               overflow: "hidden",
               transition: "0.25s",
-
               "&:hover": {
                 transform: "translateY(-6px)",
-                boxShadow:
-                  "0 15px 35px rgba(130,80,170,0.22)",
+                boxShadow: "0 15px 35px rgba(130,80,170,0.22)",
               },
             }}
           >
@@ -555,11 +449,7 @@ function Dashboard({ setPagina }) {
               }}
             />
 
-            <CardContent
-              sx={{
-                p: 3.5,
-              }}
-            >
+            <CardContent sx={{ p: 3.5 }}>
               <Box
                 sx={{
                   display: "flex",
@@ -575,16 +465,11 @@ function Dashboard({ setPagina }) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background:
-                      "rgba(255,255,255,0.35)",
+                    background: "rgba(255,255,255,0.35)",
                     color: "#5f3d76",
                   }}
                 >
-                  <CategoryIcon
-                    sx={{
-                      fontSize: 32,
-                    }}
-                  />
+                  <CategoryIcon sx={{ fontSize: 32 }} />
                 </Box>
 
                 <Typography
@@ -594,38 +479,31 @@ function Dashboard({ setPagina }) {
                     color: "#4a315e",
                   }}
                 >
-                  {cantidadCategorias}
+                  {cargandoCategorias ? (
+                    <CircularProgress size={30} sx={{ color: "#4a315e" }} />
+                  ) : (
+                    cantidadCategorias
+                  )}
                 </Typography>
               </Box>
 
               <Typography
                 variant="h5"
-                sx={{
-                  mt: 2,
-                  fontWeight: "bold",
-                  color: "#4a315e",
-                }}
+                sx={{ mt: 2, fontWeight: "bold", color: "#4a315e" }}
               >
                 Categorías
               </Typography>
 
-              <Typography
-                sx={{
-                  mt: 0.8,
-                  color: "#5f4770",
-                }}
-              >
-                {cantidadCategorias === 1
+              <Typography sx={{ mt: 0.8, color: "#5f4770" }}>
+                {cargandoCategorias
+                  ? "Cargando..."
+                  : cantidadCategorias === 1
                   ? "1 categoría registrada"
                   : `${cantidadCategorias} categorías registradas`}
               </Typography>
 
               <Typography
-                sx={{
-                  mt: 1,
-                  color: "#6d5580",
-                  fontSize: "0.9rem",
-                }}
+                sx={{ mt: 1, color: "#6d5580", fontSize: "0.9rem" }}
               >
                 Organizar y administrar categorías.
               </Typography>
@@ -633,7 +511,6 @@ function Dashboard({ setPagina }) {
           </Card>
 
           {/* EMPLEADOS */}
-
           <Card
             onClick={() => navegar("empleados")}
             sx={{
@@ -641,17 +518,13 @@ function Dashboard({ setPagina }) {
               borderRadius: "22px",
               background:
                 "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
-              boxShadow:
-                "0 10px 30px rgba(130,80,170,0.14)",
-              border:
-                "1px solid rgba(255,255,255,0.45)",
+              boxShadow: "0 10px 30px rgba(130,80,170,0.14)",
+              border: "1px solid rgba(255,255,255,0.45)",
               overflow: "hidden",
               transition: "0.25s",
-
               "&:hover": {
                 transform: "translateY(-6px)",
-                boxShadow:
-                  "0 15px 35px rgba(130,80,170,0.22)",
+                boxShadow: "0 15px 35px rgba(130,80,170,0.22)",
               },
             }}
           >
@@ -663,11 +536,7 @@ function Dashboard({ setPagina }) {
               }}
             />
 
-            <CardContent
-              sx={{
-                p: 3.5,
-              }}
-            >
+            <CardContent sx={{ p: 3.5 }}>
               <Box
                 sx={{
                   display: "flex",
@@ -683,16 +552,11 @@ function Dashboard({ setPagina }) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background:
-                      "rgba(255,255,255,0.35)",
+                    background: "rgba(255,255,255,0.35)",
                     color: "#5f3d76",
                   }}
                 >
-                  <PeopleIcon
-                    sx={{
-                      fontSize: 32,
-                    }}
-                  />
+                  <PeopleIcon sx={{ fontSize: 32 }} />
                 </Box>
 
                 <Typography
@@ -708,32 +572,19 @@ function Dashboard({ setPagina }) {
 
               <Typography
                 variant="h5"
-                sx={{
-                  mt: 2,
-                  fontWeight: "bold",
-                  color: "#4a315e",
-                }}
+                sx={{ mt: 2, fontWeight: "bold", color: "#4a315e" }}
               >
                 Empleados
               </Typography>
 
-              <Typography
-                sx={{
-                  mt: 0.8,
-                  color: "#5f4770",
-                }}
-              >
+              <Typography sx={{ mt: 0.8, color: "#5f4770" }}>
                 {cantidadEmpleados === 1
                   ? "1 empleado registrado"
                   : `${cantidadEmpleados} empleados registrados`}
               </Typography>
 
               <Typography
-                sx={{
-                  mt: 1,
-                  color: "#6d5580",
-                  fontSize: "0.9rem",
-                }}
+                sx={{ mt: 1, color: "#6d5580", fontSize: "0.9rem" }}
               >
                 Administrar empleados y usuarios.
               </Typography>
@@ -741,27 +592,17 @@ function Dashboard({ setPagina }) {
           </Card>
         </Box>
 
-        {/* =========================
-            ACCESOS RAPIDOS
-        ========================== */}
-
+        {/* ACCESOS RAPIDOS */}
         <Card
           sx={{
             mt: 5,
             borderRadius: "22px",
-            background:
-              "rgba(255,255,255,0.92)",
-            border:
-              "1px solid rgba(130,80,170,0.08)",
-            boxShadow:
-              "0 8px 25px rgba(130,80,170,0.08)",
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid rgba(130,80,170,0.08)",
+            boxShadow: "0 8px 25px rgba(130,80,170,0.08)",
           }}
         >
-          <CardContent
-            sx={{
-              p: { xs: 2.5, md: 3.5 },
-            }}
-          >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             <Typography
               variant="h6"
               sx={{
@@ -773,13 +614,7 @@ function Dashboard({ setPagina }) {
               Accesos rápidos
             </Typography>
 
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1.5,
-              }}
-            >
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
               <Button
                 variant="outlined"
                 startIcon={<MedicationIcon />}
@@ -790,11 +625,9 @@ function Dashboard({ setPagina }) {
                   borderRadius: "10px",
                   textTransform: "none",
                   fontWeight: "bold",
-
                   "&:hover": {
                     borderColor: "#a978d1",
-                    backgroundColor:
-                      "rgba(200,162,232,0.10)",
+                    backgroundColor: "rgba(200,162,232,0.10)",
                   },
                 }}
               >
@@ -811,11 +644,9 @@ function Dashboard({ setPagina }) {
                   borderRadius: "10px",
                   textTransform: "none",
                   fontWeight: "bold",
-
                   "&:hover": {
                     borderColor: "#a978d1",
-                    backgroundColor:
-                      "rgba(200,162,232,0.10)",
+                    backgroundColor: "rgba(200,162,232,0.10)",
                   },
                 }}
               >
@@ -832,11 +663,9 @@ function Dashboard({ setPagina }) {
                   borderRadius: "10px",
                   textTransform: "none",
                   fontWeight: "bold",
-
                   "&:hover": {
                     borderColor: "#a978d1",
-                    backgroundColor:
-                      "rgba(200,162,232,0.10)",
+                    backgroundColor: "rgba(200,162,232,0.10)",
                   },
                 }}
               >
@@ -846,22 +675,9 @@ function Dashboard({ setPagina }) {
           </CardContent>
         </Card>
 
-        {/* =========================
-            PIE
-        ========================== */}
-
-        <Box
-          sx={{
-            textAlign: "center",
-            mt: 5,
-          }}
-        >
-          <Typography
-            sx={{
-              color: "#8b7897",
-              fontSize: "0.85rem",
-            }}
-          >
+        {/* PIE */}
+        <Box sx={{ textAlign: "center", mt: 5 }}>
+          <Typography sx={{ color: "#8b7897", fontSize: "0.85rem" }}>
             Sistema de gestión de farmacia
           </Typography>
         </Box>

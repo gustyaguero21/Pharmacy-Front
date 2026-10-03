@@ -101,6 +101,9 @@ function Medicamentos({ setPagina }) {
   const [categoria, setCategoria] =
     useState("Analgésicos");
 
+  const [fechaExpiracion, setFechaExpiracion] =
+    useState("");
+
   // =========================
   // FILTRAR MEDICAMENTOS
   // =========================
@@ -763,6 +766,20 @@ function Medicamentos({ setPagina }) {
               Antialérgicos
             </MenuItem>
           </TextField>
+
+          <TextField
+            fullWidth
+            label="Fecha de Expiración"
+            type="date"
+            value={fechaExpiracion}
+            onChange={(e) => setFechaExpiracion(e.target.value)}
+            margin="normal"
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+          />
         </DialogContent>
 
         <DialogActions sx={{ p: 2 }}>
