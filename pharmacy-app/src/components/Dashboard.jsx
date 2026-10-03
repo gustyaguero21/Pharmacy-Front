@@ -25,6 +25,7 @@ import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import VaccinesIcon from "@mui/icons-material/Vaccines";
 
 const API_CATEGORIES_URL = "http://localhost:5000/api/v1/categories";
+const API_MEDICATIONS_URL = "http://localhost:5000/api/v1/medications";
 
 function Dashboard({ setPagina }) {
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -32,9 +33,12 @@ function Dashboard({ setPagina }) {
   // =========================
   // CANTIDADES Y ESTADOS DE CARGA
   // =========================
-  const [cantidadMedicamentos, setCantidadMedicamentos] = useState(6);
+  const [cantidadMedicamentos, setCantidadMedicamentos] = useState(0);
+  const [cargandoMedicamentos, setCargandoMedicamentos] = useState(true);
+
   const [cantidadCategorias, setCantidadCategorias] = useState(0);
   const [cargandoCategorias, setCargandoCategorias] = useState(true);
+
   const [cantidadEmpleados, setCantidadEmpleados] = useState(3);
 
   // =========================
@@ -69,35 +73,108 @@ function Dashboard({ setPagina }) {
   // =========================
   // CARGA DE DATOS DESDE FLASK/API
   // =========================
-  useEffect(() => {
-    const obtenerCategorias = async () => {
-      try {
-        const respuesta = await fetch(API_CATEGORIES_URL);
 
-        if (respuesta.ok) {
-          const data = await respuesta.json();
+  const obtenerCategorias = async () => {
+    try {
+      const respuesta = await fetch(API_CATEGORIES_URL);
 
-          // Si el backend devuelve una lista de tuplas [[58, "ANALG01", ...]]
-          // o una lista de objetos, data.length contabiliza el total real.
-          if (Array.isArray(data)) {
-            setCantidadCategorias(data.length);
-          } else if (data && Array.isArray(data.categorias)) {
-            setCantidadCategorias(data.categorias.length);
-          } else {
-            setCantidadCategorias(0);
-          }
+      if (respuesta.ok) {
+        const data = await respuesta.json();
+
+        if (Array.isArray(data)) {
+          setCantidadCategorias(data.length);
+        } else if (data && Array.isArray(data.categorias)) {
+          setCantidadCategorias(data.categorias.length);
         } else {
-          console.error("Error al obtener las categorías:", respuesta.status);
+          setCantidadCategorias(0);
         }
-      } catch (error) {
-        console.error("Error de conexión al obtener categorías:", error);
-      } finally {
-        setCargandoCategorias(false);
+      } else {
+        console.error(
+          "Error al obtener las categorías:",
+          respuesta.status
+        );
       }
-    };
+    } catch (error) {
+      console.error(
+        "Error de conexión al obtener categorías:",
+        error
+      );
+    } finally {
+      setCargandoCategorias(false);
+    }
+  };
 
+  const obtenerMedicamentos = async () => {
+    try {
+      const respuesta = await fetch(API_MEDICATIONS_URL);
+
+      if (respuesta.ok) {
+        const data = await respuesta.json();
+
+        if (Array.isArray(data)) {
+          setCantidadMedicamentos(data.length);
+        } else if (data && Array.isArray(data.medicamentos)) {
+          setCantidadMedicamentos(data.medicamentos.length);
+        } else {
+          setCantidadMedicamentos(0);
+        }
+      } else {
+        console.error(
+          "Error al obtener los medicamentos:",
+          respuesta.status
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Error de conexión al obtener medicamentos:",
+        error
+      );
+    } finally {
+      setCargandoMedicamentos(false);
+    }
+  };
+
+  const obtenerEmpleados = async () => {
+    try {
+      const respuesta = await fetch(API_EMPLOYEES_URL);
+
+      if (respuesta.ok) {
+        const data = await respuesta.json();
+
+        if (Array.isArray(data)) {
+          setCantidadEmpleados(data.length);
+        } else {
+          setCantidadEmpleados(0);
+        }
+      } else {
+        console.error(
+          "Error al obtener los empleados:",
+          respuesta.status
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Error de conexión al obtener empleados:",
+        error
+      );
+    } finally {
+      setCargandoEmpleados(false);
+    }
+  };
+
+
+  useEffect(() => {
     obtenerCategorias();
   }, []);
+
+  useEffect(() => {
+    obtenerMedicamentos();
+  }, []);
+
+  useEffect(() => {
+    obtenerEmpleados();
+  }, []);
+
 
   return (
     <Box
@@ -342,7 +419,7 @@ function Dashboard({ setPagina }) {
             gap: 3,
           }}
         >
-          {/* MEDICAMENTOS */}
+          {/* MEDICAMENTOS (OBTENIDOS DINÁMICAMENTE) */}
           <Card
             onClick={() => navegar("medicamentos")}
             sx={{
@@ -398,7 +475,11 @@ function Dashboard({ setPagina }) {
                     color: "#4a315e",
                   }}
                 >
-                  {cantidadMedicamentos}
+                  {cargandoMedicamentos ? (
+                    <CircularProgress size={30} sx={{ color: "#4a315e" }} />
+                  ) : (
+                    cantidadMedicamentos
+                  )}
                 </Typography>
               </Box>
 
@@ -410,7 +491,9 @@ function Dashboard({ setPagina }) {
               </Typography>
 
               <Typography sx={{ mt: 0.8, color: "#5f4770" }}>
-                {cantidadMedicamentos === 1
+                {cargandoMedicamentos
+                  ? "Cargando..."
+                  : cantidadMedicamentos === 1
                   ? "1 medicamento registrado"
                   : `${cantidadMedicamentos} medicamentos registrados`}
               </Typography>

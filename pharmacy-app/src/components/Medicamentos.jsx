@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import {
   Box,
@@ -14,244 +14,250 @@ import {
   DialogContent,
   DialogActions,
   MenuItem,
+  CircularProgress,
+  IconButton,
 } from "@mui/material";
 
 import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+
+const API_URL = "http://localhost:5000/api/v1/medications";
+
+// Mapeo entre los códigos de categoría de la BD y etiquetas legibles
+const CATEGORIAS_MAP = {
+  ANALG01: "Analgésicos",
+  ANTIB01: "Antibióticos",
+  ANTIINF01: "Antiinflamatorios",
+  ANTIAL01: "Antialérgicos",
+};
 
 function Medicamentos({ setPagina }) {
-  // =========================
-  // DATOS DE PRUEBA
-  // =========================
+  const [medicamentos, setMedicamentos] = useState([]);
+  const [cargando, setCargando] = useState(true);
 
-  const [medicamentos, setMedicamentos] = useState([
-    {
-      id: 1,
-      nombre: "Paracetamol",
-      precio: 1500,
-      stock: 20,
-      categoria: "Analgésicos",
-    },
-    {
-      id: 2,
-      nombre: "Ibuprofeno",
-      precio: 2000,
-      stock: 15,
-      categoria: "Antiinflamatorios",
-    },
-    {
-      id: 3,
-      nombre: "Amoxicilina",
-      precio: 3500,
-      stock: 10,
-      categoria: "Antibióticos",
-    },
-    {
-      id: 4,
-      nombre: "Diclofenac",
-      precio: 1800,
-      stock: 8,
-      categoria: "Antiinflamatorios",
-    },
-    {
-      id: 5,
-      nombre: "Loratadina",
-      precio: 2500,
-      stock: 25,
-      categoria: "Antialérgicos",
-    },
-    {
-      id: 6,
-      nombre: "Aspirina",
-      precio: 1200,
-      stock: 30,
-      categoria: "Analgésicos",
-    },
-  ]);
-
-  // =========================
-  // BUSQUEDA Y FILTROS
-  // =========================
-
+  // BÚSQUEDA Y FILTROS
   const [busqueda, setBusqueda] = useState("");
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todos");
 
-  const [categoriaSeleccionada, setCategoriaSeleccionada] =
-    useState("Todos");
-
-  // =========================
-  // MODAL
-  // =========================
-
+  // MODAL Y MODO EDICIÓN
   const [modalAbierto, setModalAbierto] = useState(false);
-
   const [modoEdicion, setModoEdicion] = useState(false);
+  const [medicamentoEditando, setMedicamentoEditando] = useState(null);
 
-  const [medicamentoEditando, setMedicamentoEditando] =
-    useState(null);
-
-  // =========================
   // FORMULARIO
-  // =========================
-
   const [nombre, setNombre] = useState("");
-
   const [precio, setPrecio] = useState("");
-
   const [stock, setStock] = useState("");
+  const [categoria, setCategoria] = useState("ANALG01");
+  const [fechaExpiracion, setFechaExpiracion] = useState("");
 
-  const [categoria, setCategoria] =
-    useState("Analgésicos");
+  // Helper para convertir el array que devuelve Flask en un objeto JavaScript
+  const transformarMedicamento = (item) => {
+    if (!item) return null;
+    if (Array.isArray(item)) {
+      // Formato: [id, nombre, precio, stock, categoria, expiration_date]
+      const fecha = item[5] ? new Date(item[5]) : null;
+      const fechaFormateada = fecha && !isNaN(fecha)
+        ? fecha.toISOString().split("T")[0]
+        : "";
 
-  const [fechaExpiracion, setFechaExpiracion] =
-    useState("");
-
-  // =========================
-  // FILTRAR MEDICAMENTOS
-  // =========================
-
-  const medicamentosFiltrados = medicamentos.filter(
-    (medicamento) => {
-      const coincideNombre = medicamento.nombre
-        .toLowerCase()
-        .includes(busqueda.toLowerCase());
-
-      const coincideCategoria =
-        categoriaSeleccionada === "Todos" ||
-        medicamento.categoria === categoriaSeleccionada;
-
-      return coincideNombre && coincideCategoria;
+      return {
+        id: item[0],
+        nombre: item[1],
+        precio: parseFloat(item[2]),
+        stock: item[3],
+        categoria: item[4],
+        fechaExpiracion: fechaFormateada,
+      };
     }
-  );
-
-  // =========================
-  // ABRIR NUEVO MEDICAMENTO
-  // =========================
-
-  const abrirNuevoMedicamento = () => {
-    setModoEdicion(false);
-
-    setMedicamentoEditando(null);
-
-    setNombre("");
-    setPrecio("");
-    setStock("");
-    setCategoria("Analgésicos");
-
-    setModalAbierto(true);
+    return item;
   };
 
   // =========================
-  // ABRIR EDITAR
+  // OBTENER TODOS LOS MEDICAMENTOS (GET)
   // =========================
+  const cargarMedicamentos = useCallback(async () => {
+    try {
+      setCargando(true);
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error("Error al obtener los medicamentos");
+
+      const data = await response.json();
+      const medicamentosFormateados = data.map(transformarMedicamento);
+      setMedicamentos(medicamentosFormateados);
+    } catch (error) {
+      console.error(error);
+      window.alert("No se pudo conectar con el servidor para obtener los medicamentos.");
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarMedicamentos();
+  }, [cargarMedicamentos]);
+
+  // =========================
+  // BÚSQUEDA INDIVIDUAL POR API (GET /api/v1/medications/<nombre>)
+  // =========================
+  const buscarMedicamentoPorNombre = async () => {
+    const termino = busqueda.trim();
+    if (!termino) {
+      cargarMedicamentos();
+      return;
+    }
+
+    try {
+      setCargando(true);
+      const response = await fetch(`${API_URL}/${encodeURIComponent(termino)}`);
+
+      if (response.status === 404) {
+        setMedicamentos([]);
+        return;
+      }
+
+      if (!response.ok) throw new Error("Error en la búsqueda");
+
+      const data = await response.json();
+      const itemFormateado = transformarMedicamento(data);
+      setMedicamentos(itemFormateado ? [itemFormateado] : []);
+    } catch (error) {
+      console.error(error);
+      window.alert("Ocurrió un error al buscar el medicamento.");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const limpiarBusqueda = () => {
+    setBusqueda("");
+    cargarMedicamentos();
+  };
+
+  // =========================
+  // FILTRADO LOCAL POR CATEGORÍA
+  // =========================
+  const medicamentosFiltrados = medicamentos.filter((med) => {
+    if (categoriaSeleccionada === "Todos") return true;
+    return med.categoria === categoriaSeleccionada;
+  });
+
+  // =========================
+  // CONTROLES MODAL
+  // =========================
+  const abrirNuevoMedicamento = () => {
+    setModoEdicion(false);
+    setMedicamentoEditando(null);
+    setNombre("");
+    setPrecio("");
+    setStock("");
+    setCategoria("ANALG01");
+    setFechaExpiracion("");
+    setModalAbierto(true);
+  };
 
   const abrirEditarMedicamento = (medicamento) => {
     setModoEdicion(true);
-
     setMedicamentoEditando(medicamento);
-
     setNombre(medicamento.nombre);
     setPrecio(medicamento.precio);
     setStock(medicamento.stock);
     setCategoria(medicamento.categoria);
-
+    setFechaExpiracion(medicamento.fechaExpiracion || "");
     setModalAbierto(true);
   };
 
-  // =========================
-  // GUARDAR MEDICAMENTO
-  // =========================
-
-  const guardarMedicamento = () => {
-    if (
-      !nombre.trim() ||
-      precio === "" ||
-      stock === "" ||
-      !categoria
-    ) {
-      window.alert("Completá todos los campos.");
-      return;
-    }
-
-    if (Number(precio) < 0) {
-      window.alert("El precio no puede ser negativo.");
-      return;
-    }
-
-    if (Number(stock) < 0) {
-      window.alert("El stock no puede ser negativo.");
-      return;
-    }
-
-    // EDITAR
-    if (modoEdicion && medicamentoEditando) {
-      setMedicamentos(
-        medicamentos.map((medicamento) =>
-          medicamento.id === medicamentoEditando.id
-            ? {
-                ...medicamento,
-                nombre: nombre.trim(),
-                precio: Number(precio),
-                stock: Number(stock),
-                categoria: categoria,
-              }
-            : medicamento
-        )
-      );
-    }
-
-    // NUEVO
-    else {
-      const nuevoMedicamento = {
-        id: Date.now(),
-        nombre: nombre.trim(),
-        precio: Number(precio),
-        stock: Number(stock),
-        categoria: categoria,
-      };
-
-      setMedicamentos([
-        ...medicamentos,
-        nuevoMedicamento,
-      ]);
-    }
-
-    cerrarModal();
-  };
-
-  // =========================
-  // CERRAR MODAL
-  // =========================
-
   const cerrarModal = () => {
     setModalAbierto(false);
-
     setModoEdicion(false);
-
     setMedicamentoEditando(null);
-
     setNombre("");
     setPrecio("");
     setStock("");
-    setCategoria("Analgésicos");
+    setCategoria("ANALG01");
+    setFechaExpiracion("");
   };
 
   // =========================
-  // ELIMINAR
+  // GUARDAR (POST / PUT)
   // =========================
-
-  const eliminarMedicamento = (id) => {
-    const confirmar = window.confirm(
-      "¿Seguro que querés eliminar este medicamento?"
-    );
-
-    if (!confirmar) {
+  const guardarMedicamento = async () => {
+    if (!nombre.trim() || precio === "" || stock === "" || !categoria || !fechaExpiracion) {
+      window.alert("Completá todos los campos, incluida la fecha de expiración.");
       return;
     }
 
-    setMedicamentos(
-      medicamentos.filter(
-        (medicamento) => medicamento.id !== id
-      )
+    if (Number(precio) < 0 || Number(stock) < 0) {
+      window.alert("El precio y el stock no pueden ser negativos.");
+      return;
+    }
+
+    try {
+      if (modoEdicion && medicamentoEditando) {
+        // ACTUALIZAR (PUT) -> No requiere enviar el 'name' en el JSON
+        const payloadPut = {
+          price: Number(precio),
+          stock: Number(stock),
+          category: categoria,
+          expiration_date: fechaExpiracion,
+        };
+
+        const response = await fetch(`${API_URL}/${encodeURIComponent(medicamentoEditando.nombre)}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadPut),
+        });
+
+        if (!response.ok) throw new Error("Error al actualizar medicamento");
+      } else {
+        // CREAR (POST) -> Requiere el objeto completo con 'name'
+        const payloadPost = {
+          name: nombre.trim(),
+          price: Number(precio),
+          stock: Number(stock),
+          category: categoria,
+          expiration_date: fechaExpiracion,
+        };
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadPost),
+        });
+
+        if (!response.ok) throw new Error("Error al agregar medicamento");
+      }
+
+      await cargarMedicamentos();
+      cerrarModal();
+    } catch (error) {
+      console.error(error);
+      window.alert("Ocurrió un error al guardar los datos.");
+    }
+  };
+
+  // =========================
+  // ELIMINAR (DELETE)
+  // =========================
+  const eliminarMedicamento = async (medicamento) => {
+    const confirmar = window.confirm(
+      `¿Seguro que querés eliminar "${medicamento.nombre}"?`
     );
+
+    if (!confirmar) return;
+
+    try {
+      const response = await fetch(`${API_URL}/${encodeURIComponent(medicamento.nombre)}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Error al eliminar medicamento");
+
+      await cargarMedicamentos();
+    } catch (error) {
+      console.error(error);
+      window.alert("No se pudo eliminar el medicamento.");
+    }
   };
 
   return (
@@ -263,10 +269,7 @@ function Medicamentos({ setPagina }) {
           "linear-gradient(135deg, #f4f9fc 0%, #eef7fa 50%, #f8fbfd 100%)",
       }}
     >
-      {/* =========================
-          ENCABEZADO
-      ========================== */}
-
+      {/* ENCABEZADO */}
       <Box
         sx={{
           display: "flex",
@@ -287,10 +290,8 @@ function Medicamentos({ setPagina }) {
             textTransform: "none",
             fontWeight: "bold",
             px: 2.5,
-
             "&:hover": {
-              backgroundColor:
-                "rgba(200,162,232,0.12)",
+              backgroundColor: "rgba(200,162,232,0.12)",
               borderColor: "#a978d1",
             },
           }}
@@ -300,22 +301,10 @@ function Medicamentos({ setPagina }) {
         </Button>
 
         <Box>
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            sx={{
-              color: "#4a315e",
-            }}
-          >
+          <Typography variant="h4" fontWeight="bold" sx={{ color: "#4a315e" }}>
             Medicamentos
           </Typography>
-
-          <Typography
-            sx={{
-              color: "#6d5580",
-              marginTop: 0.5,
-            }}
-          >
+          <Typography sx={{ color: "#6d5580", marginTop: 0.5 }}>
             Administración de medicamentos de la farmacia
           </Typography>
         </Box>
@@ -324,22 +313,17 @@ function Medicamentos({ setPagina }) {
           variant="contained"
           onClick={abrirNuevoMedicamento}
           sx={{
-            background:
-              "linear-gradient(90deg, #a978d1, #c8a2e8)",
+            background: "linear-gradient(90deg, #a978d1, #c8a2e8)",
             color: "#3d2850",
             fontWeight: "bold",
             borderRadius: "12px",
             textTransform: "none",
             px: 3,
             py: 1.2,
-            boxShadow:
-              "0 5px 15px rgba(100, 60, 130, 0.18)",
-
+            boxShadow: "0 5px 15px rgba(100, 60, 130, 0.18)",
             "&:hover": {
-              background:
-                "linear-gradient(90deg, #9b68c7, #b98add)",
-              boxShadow:
-                "0 7px 18px rgba(100, 60, 130, 0.25)",
+              background: "linear-gradient(90deg, #9b68c7, #b98add)",
+              boxShadow: "0 7px 18px rgba(100, 60, 130, 0.25)",
             },
           }}
         >
@@ -347,369 +331,258 @@ function Medicamentos({ setPagina }) {
         </Button>
       </Box>
 
-      {/* =========================
-          BUSCADOR
-      ========================== */}
-
+      {/* BUSCADOR */}
       <Card
         sx={{
           borderRadius: "20px",
-          background:
-            "rgba(255,255,255,0.92)",
-          boxShadow:
-            "0 8px 25px rgba(130, 80, 170, 0.08)",
-          border:
-            "1px solid rgba(130,80,170,0.08)",
+          background: "rgba(255,255,255,0.92)",
+          boxShadow: "0 8px 25px rgba(130, 80, 170, 0.08)",
+          border: "1px solid rgba(130,80,170,0.08)",
           marginBottom: 3,
         }}
       >
         <CardContent sx={{ p: 2.5 }}>
-          <TextField
-            fullWidth
-            label="Buscar medicamento"
-            placeholder="Ej: Paracetamol"
-            value={busqueda}
-            onChange={(e) =>
-              setBusqueda(e.target.value)
-            }
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon
-                    sx={{
-                      color: "#9b68c7",
-                    }}
-                  />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              fullWidth
+              label="Buscar medicamento por nombre"
+              placeholder="Ej: Ibuprofeno"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") buscarMedicamentoPorNombre();
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#9b68c7" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: busqueda && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={limpiarBusqueda}>
+                      <ClearIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  "&:hover fieldset": { borderColor: "#c8a2e8" },
+                  "&.Mui-focused fieldset": { borderColor: "#a978d1" },
+                },
+                "& .MuiInputLabel-root.Mui-focused": { color: "#8c5db3" },
+              }}
+            />
+            <Button
+              variant="contained"
+              onClick={buscarMedicamentoPorNombre}
+              sx={{
                 borderRadius: "12px",
-
-                "&:hover fieldset": {
-                  borderColor: "#c8a2e8",
-                },
-
-                "&.Mui-focused fieldset": {
-                  borderColor: "#a978d1",
-                },
-              },
-
-              "& .MuiInputLabel-root.Mui-focused": {
-                color: "#8c5db3",
-              },
-            }}
-          />
+                background: "#a978d1",
+                textTransform: "none",
+                fontWeight: "bold",
+                px: 3,
+                "&:hover": { backgroundColor: "#9b68c7" },
+              }}
+            >
+              Buscar
+            </Button>
+          </Box>
         </CardContent>
       </Card>
 
-      {/* =========================
-          CATEGORIAS
-      ========================== */}
-
-      <Typography
-        variant="h6"
-        fontWeight="bold"
-        sx={{
-          marginBottom: 2,
-          color: "#4a315e",
-        }}
-      >
+      {/* FILTRO CATEGORÍAS */}
+      <Typography variant="h6" fontWeight="bold" sx={{ marginBottom: 2, color: "#4a315e" }}>
         Categorías
       </Typography>
 
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1,
-          flexWrap: "wrap",
-          marginBottom: 4,
-        }}
-      >
-        {[
-          "Todos",
-          "Analgésicos",
-          "Antibióticos",
-          "Antiinflamatorios",
-          "Antialérgicos",
-        ].map((nombreCategoria) => (
-          <Button
-            key={nombreCategoria}
-            variant={
-              categoriaSeleccionada === nombreCategoria
-                ? "contained"
-                : "outlined"
-            }
-            onClick={() =>
-              setCategoriaSeleccionada(nombreCategoria)
-            }
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", marginBottom: 4 }}>
+        {["Todos", ...Object.keys(CATEGORIAS_MAP)].map((catKey) => {
+          const etiqueta = catKey === "Todos" ? "Todos" : CATEGORIAS_MAP[catKey];
+          const seleccionada = categoriaSeleccionada === catKey;
+
+          return (
+            <Button
+              key={catKey}
+              variant={seleccionada ? "contained" : "outlined"}
+              onClick={() => setCategoriaSeleccionada(catKey)}
+              sx={{
+                borderRadius: "10px",
+                textTransform: "none",
+                fontWeight: "bold",
+                ...(seleccionada
+                  ? {
+                      background: "linear-gradient(90deg, #a978d1, #c8a2e8)",
+                      color: "#3d2850",
+                      "&:hover": {
+                        background: "linear-gradient(90deg, #9b68c7, #b98add)",
+                      },
+                    }
+                  : {
+                      borderColor: "#c8a2e8",
+                      color: "#6d4d82",
+                      "&:hover": {
+                        borderColor: "#a978d1",
+                        backgroundColor: "rgba(200,162,232,0.10)",
+                      },
+                    }),
+              }}
+            >
+              {etiqueta}
+            </Button>
+          );
+        })}
+      </Box>
+
+      {/* LISTADO O MENSAJE */}
+      {cargando ? (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+          <CircularProgress sx={{ color: "#a978d1" }} />
+        </Box>
+      ) : (
+        <>
+          <Typography variant="h6" fontWeight="bold" sx={{ marginBottom: 2, color: "#4a315e" }}>
+            Medicamentos encontrados: {medicamentosFiltrados.length}
+          </Typography>
+
+          <Box
             sx={{
-              borderRadius: "10px",
-              textTransform: "none",
-              fontWeight: "bold",
-
-              ...(categoriaSeleccionada ===
-              nombreCategoria
-                ? {
-                    background:
-                      "linear-gradient(90deg, #a978d1, #c8a2e8)",
-                    color: "#3d2850",
-
-                    "&:hover": {
-                      background:
-                        "linear-gradient(90deg, #9b68c7, #b98add)",
-                    },
-                  }
-                : {
-                    borderColor: "#c8a2e8",
-                    color: "#6d4d82",
-
-                    "&:hover": {
-                      borderColor: "#a978d1",
-                      backgroundColor:
-                        "rgba(200,162,232,0.10)",
-                    },
-                  }),
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                lg: "repeat(3, 1fr)",
+              },
+              gap: 3,
             }}
           >
-            {nombreCategoria}
-          </Button>
-        ))}
-      </Box>
+            {medicamentosFiltrados.map((medicamento) => (
+              <Card
+                key={medicamento.id}
+                sx={{
+                  borderRadius: "20px",
+                  background: "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
+                  boxShadow: "0 8px 25px rgba(130, 80, 170, 0.15)",
+                  border: "1px solid rgba(255,255,255,0.35)",
+                  overflow: "hidden",
+                  transition: "0.25s",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 12px 30px rgba(130,80,170,0.22)",
+                  },
+                }}
+              >
+                <Box sx={{ height: 5, background: "linear-gradient(90deg, #b98add, #e5c9f7)" }} />
 
-      {/* =========================
-          RESULTADOS
-      ========================== */}
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ color: "#4a315e" }}>
+                    {medicamento.nombre}
+                  </Typography>
 
-      <Typography
-        variant="h6"
-        fontWeight="bold"
-        sx={{
-          marginBottom: 2,
-          color: "#4a315e",
-        }}
-      >
-        Medicamentos encontrados:{" "}
-        {medicamentosFiltrados.length}
-      </Typography>
+                  <Chip
+                    label={CATEGORIAS_MAP[medicamento.categoria] || medicamento.categoria}
+                    sx={{
+                      marginTop: 1,
+                      marginBottom: 2,
+                      backgroundColor: "rgba(255,255,255,0.38)",
+                      color: "#5a3b70",
+                      fontWeight: "bold",
+                      border: "1px solid rgba(255,255,255,0.35)",
+                    }}
+                  />
 
-      {/* =========================
-          TARJETAS
-      ========================== */}
+                  <Typography sx={{ color: "#5f4770", fontWeight: 500 }}>
+                    Precio: ${medicamento.precio.toFixed(2)}
+                  </Typography>
 
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            lg: "repeat(3, 1fr)",
-          },
-          gap: 3,
-        }}
-      >
-        {medicamentosFiltrados.map(
-          (medicamento) => (
+                  <Typography sx={{ color: "#5f4770", fontWeight: 500, marginTop: 0.5 }}>
+                    Stock: {medicamento.stock} u.
+                  </Typography>
+
+                  <Typography sx={{ color: "#5f4770", fontSize: "0.85rem", marginTop: 0.5 }}>
+                    Vence: {medicamento.fechaExpiracion || "Sin fecha"}
+                  </Typography>
+
+                  <Box sx={{ display: "flex", gap: 1, marginTop: 2 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => abrirEditarMedicamento(medicamento)}
+                      sx={{
+                        borderColor: "#a978d1",
+                        color: "#5f3d76",
+                        borderRadius: "10px",
+                        textTransform: "none",
+                        fontWeight: "bold",
+                        "&:hover": {
+                          borderColor: "#8f5db5",
+                          backgroundColor: "rgba(255,255,255,0.15)",
+                        },
+                      }}
+                    >
+                      Editar
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => eliminarMedicamento(medicamento)}
+                      sx={{
+                        borderColor: "#a45b79",
+                        color: "#7b4058",
+                        borderRadius: "10px",
+                        textTransform: "none",
+                        fontWeight: "bold",
+                        "&:hover": {
+                          borderColor: "#8e4564",
+                          backgroundColor: "rgba(255,255,255,0.15)",
+                        },
+                      }}
+                    >
+                      Eliminar
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+
+          {medicamentosFiltrados.length === 0 && (
             <Card
-              key={medicamento.id}
               sx={{
+                marginTop: 4,
                 borderRadius: "20px",
-                background:
-                  "linear-gradient(135deg, #c8a2e8 0%, #d8b9f0 100%)",
-                boxShadow:
-                  "0 8px 25px rgba(130, 80, 170, 0.15)",
-                border:
-                  "1px solid rgba(255,255,255,0.35)",
-                overflow: "hidden",
-                transition: "0.25s",
-
-                "&:hover": {
-                  transform: "translateY(-4px)",
-                  boxShadow:
-                    "0 12px 30px rgba(130,80,170,0.22)",
-                },
+                background: "linear-gradient(135deg, #c8a2e8, #d8b9f0)",
+                boxShadow: "0 8px 25px rgba(130,80,170,0.12)",
               }}
             >
-              {/* DETALLE SUPERIOR */}
-
-              <Box
-                sx={{
-                  height: 5,
-                  background:
-                    "linear-gradient(90deg, #b98add, #e5c9f7)",
-                }}
-              />
-
-              <CardContent sx={{ p: 3 }}>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  sx={{
-                    color: "#4a315e",
-                  }}
-                >
-                  {medicamento.nombre}
+              <CardContent>
+                <Typography sx={{ textAlign: "center", color: "#5f4770", fontWeight: 500 }}>
+                  No se encontraron medicamentos.
                 </Typography>
-
-                <Chip
-                  label={medicamento.categoria}
-                  sx={{
-                    marginTop: 1,
-                    marginBottom: 2,
-                    backgroundColor:
-                      "rgba(255,255,255,0.38)",
-                    color: "#5a3b70",
-                    fontWeight: "bold",
-                    border:
-                      "1px solid rgba(255,255,255,0.35)",
-                  }}
-                />
-
-                <Typography
-                  sx={{
-                    color: "#5f4770",
-                    fontWeight: 500,
-                  }}
-                >
-                  Precio: ${medicamento.precio}
-                </Typography>
-
-                <Typography
-                  sx={{
-                    color: "#5f4770",
-                    fontWeight: 500,
-                    marginTop: 0.5,
-                  }}
-                >
-                  Stock: {medicamento.stock}
-                </Typography>
-
-                {/* BOTONES */}
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 1,
-                    marginTop: 2,
-                  }}
-                >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() =>
-                      abrirEditarMedicamento(
-                        medicamento
-                      )
-                    }
-                    sx={{
-                      borderColor: "#a978d1",
-                      color: "#5f3d76",
-                      borderRadius: "10px",
-                      textTransform: "none",
-                      fontWeight: "bold",
-
-                      "&:hover": {
-                        borderColor: "#8f5db5",
-                        backgroundColor:
-                          "rgba(255,255,255,0.15)",
-                      },
-                    }}
-                  >
-                    Editar
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() =>
-                      eliminarMedicamento(
-                        medicamento.id
-                      )
-                    }
-                    sx={{
-                      borderColor: "#a45b79",
-                      color: "#7b4058",
-                      borderRadius: "10px",
-                      textTransform: "none",
-                      fontWeight: "bold",
-
-                      "&:hover": {
-                        borderColor: "#8e4564",
-                        backgroundColor:
-                          "rgba(255,255,255,0.15)",
-                      },
-                    }}
-                  >
-                    Eliminar
-                  </Button>
-                </Box>
               </CardContent>
             </Card>
-          )
-        )}
-      </Box>
-
-      {/* =========================
-          SIN RESULTADOS
-      ========================== */}
-
-      {medicamentosFiltrados.length === 0 && (
-        <Card
-          sx={{
-            marginTop: 4,
-            borderRadius: "20px",
-            background:
-              "linear-gradient(135deg, #c8a2e8, #d8b9f0)",
-            boxShadow:
-              "0 8px 25px rgba(130,80,170,0.12)",
-          }}
-        >
-          <CardContent>
-            <Typography
-              sx={{
-                textAlign: "center",
-                color: "#5f4770",
-                fontWeight: 500,
-              }}
-            >
-              No se encontraron medicamentos.
-            </Typography>
-          </CardContent>
-        </Card>
+          )}
+        </>
       )}
 
-      {/* =========================
-          MODAL AGREGAR / EDITAR
-      ========================== */}
-
-      <Dialog
-        open={modalAbierto}
-        onClose={cerrarModal}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle
-          sx={{
-            fontWeight: "bold",
-            color: "#4a315e",
-          }}
-        >
-          {modoEdicion
-            ? "Editar medicamento"
-            : "Nuevo medicamento"}
+      {/* MODAL CREAR / EDITAR */}
+      <Dialog open={modalAbierto} onClose={cerrarModal} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: "bold", color: "#4a315e" }}>
+          {modoEdicion ? `Editar "${medicamentoEditando?.nombre}"` : "Nuevo medicamento"}
         </DialogTitle>
 
         <DialogContent>
           <TextField
             fullWidth
             label="Nombre"
-            placeholder="Ej: Paracetamol"
+            placeholder="Ej: Ibuprofeno"
             value={nombre}
-            onChange={(e) =>
-              setNombre(e.target.value)
-            }
+            onChange={(e) => setNombre(e.target.value)}
             margin="normal"
+            disabled={modoEdicion}
           />
 
           <TextField
@@ -717,13 +590,9 @@ function Medicamentos({ setPagina }) {
             label="Precio"
             type="number"
             value={precio}
-            onChange={(e) =>
-              setPrecio(e.target.value)
-            }
+            onChange={(e) => setPrecio(e.target.value)}
             margin="normal"
-            inputProps={{
-              min: 0,
-            }}
+            slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
           />
 
           <TextField
@@ -731,13 +600,9 @@ function Medicamentos({ setPagina }) {
             label="Stock"
             type="number"
             value={stock}
-            onChange={(e) =>
-              setStock(e.target.value)
-            }
+            onChange={(e) => setStock(e.target.value)}
             margin="normal"
-            inputProps={{
-              min: 0,
-            }}
+            slotProps={{ htmlInput: { min: 0 } }}
           />
 
           <TextField
@@ -745,26 +610,14 @@ function Medicamentos({ setPagina }) {
             select
             label="Categoría"
             value={categoria}
-            onChange={(e) =>
-              setCategoria(e.target.value)
-            }
+            onChange={(e) => setCategoria(e.target.value)}
             margin="normal"
           >
-            <MenuItem value="Analgésicos">
-              Analgésicos
-            </MenuItem>
-
-            <MenuItem value="Antibióticos">
-              Antibióticos
-            </MenuItem>
-
-            <MenuItem value="Antiinflamatorios">
-              Antiinflamatorios
-            </MenuItem>
-
-            <MenuItem value="Antialérgicos">
-              Antialérgicos
-            </MenuItem>
+            {Object.entries(CATEGORIAS_MAP).map(([code, name]) => (
+              <MenuItem key={code} value={code}>
+                {name} ({code})
+              </MenuItem>
+            ))}
           </TextField>
 
           <TextField
@@ -775,9 +628,7 @@ function Medicamentos({ setPagina }) {
             onChange={(e) => setFechaExpiracion(e.target.value)}
             margin="normal"
             slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
+              inputLabel: { shrink: true },
             }}
           />
         </DialogContent>
@@ -785,11 +636,7 @@ function Medicamentos({ setPagina }) {
         <DialogActions sx={{ p: 2 }}>
           <Button
             onClick={cerrarModal}
-            sx={{
-              color: "#6d5580",
-              textTransform: "none",
-              fontWeight: "bold",
-            }}
+            sx={{ color: "#6d5580", textTransform: "none", fontWeight: "bold" }}
           >
             Cancelar
           </Button>
@@ -798,22 +645,17 @@ function Medicamentos({ setPagina }) {
             variant="contained"
             onClick={guardarMedicamento}
             sx={{
-              background:
-                "linear-gradient(90deg, #a978d1, #c8a2e8)",
+              background: "linear-gradient(90deg, #a978d1, #c8a2e8)",
               color: "#3d2850",
               fontWeight: "bold",
               borderRadius: "10px",
               textTransform: "none",
-
               "&:hover": {
-                background:
-                  "linear-gradient(90deg, #9b68c7, #b98add)",
+                background: "linear-gradient(90deg, #9b68c7, #b98add)",
               },
             }}
           >
-            {modoEdicion
-              ? "Guardar cambios"
-              : "Agregar medicamento"}
+            {modoEdicion ? "Guardar cambios" : "Agregar medicamento"}
           </Button>
         </DialogActions>
       </Dialog>
